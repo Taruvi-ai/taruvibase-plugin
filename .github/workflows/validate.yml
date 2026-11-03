@@ -1,0 +1,22 @@
+name: Validate plugin
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate manifests, MCP configs, and skills
+        run: npm test
+      - name: Validate Claude plugin manifest
+        run: npx -y @anthropic-ai/claude-code plugin validate .claude-plugin/plugin.json

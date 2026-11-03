@@ -74,7 +74,7 @@ Tenant-wide singleton.
 ## Roles
 
 ### `manage_roles(action, ...)`
-- `action="list"` → `include_hierarchy=True`. Returns `id`, `name`, `description`, `parent_slug`, `level`. **Note:** `slug` is not returned in list — use `name` for display and the role's `slug` from `create` responses for subsequent operations.
+- `action="list"` → `include_hierarchy=True`. Returns `id`, `name`, `description`, `parent_slug`, `level`. **Note:** `slug` is not returned in list — use `name` for display and the role's `slug` from `create` responses for subsequent operations. **Exception:** Cerbos policy `roles[]` arrays match the bare role `name`, not the slug — see [`cerbos-policy-cookbook.md`](cerbos-policy-cookbook.md).
 - `action="create"` → `name`, `description`, optional `parent_slug`. Returns `id`, `name`, `slug`.
 - `action="bulk_create"` → `roles` (list of dicts).
 - `action="delete"` → `role_slug`. Fails if role has members or child roles.

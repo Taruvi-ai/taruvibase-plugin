@@ -1,0 +1,11 @@
+{
+  "name": "taruvi",
+  "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, analytics, and Refine frontends.",
+  "version": "0.2.0",
+  "contextFileName": "TARUVI.md",
+  "mcpServers": {
+    "taruvi": {
+      "httpUrl": "https://mcp.taruvibase.com/mcp"
+    }
+  }
+}

@@ -46,6 +46,7 @@ Key bits:
 - `resource` — string identifier. Convention: `datatable:<table_name>` for datatables, `bucket:<slug>` for buckets, `function:<slug>` for functions, `query:<slug>` for analytics queries.
 - `version` — usually `"default"`; use other versions for staged rollouts.
 - `rules[]` — list of `{actions, effect, roles, condition?, derivedRoles?}`.
+- `roles[]` — use each role's bare `name` (e.g. `Admin`), NOT its app-scoped slug (e.g. `hrapp-admin`). This is the one spot the "use the slug" convention doesn't apply; the slug matches nothing, so every request is denied. Get `name` from `manage_roles(action="list"/"create")`.
 - `condition.match.expr` — CEL expression. `P` is the principal, `R` is the resource, `request.aux` is auxiliary data.
 - `effect` — `EFFECT_ALLOW` or `EFFECT_DENY`. DENY rules take precedence over ALLOW.
 
@@ -199,6 +200,7 @@ See also: Gotchas in SKILL.md for cross-cutting warnings (policy replacement, et
 2. **Using the wrong condition scope** — `P` vs `R` vs `request.aux` confusion. `P` = principal (the user making the request), `R` = resource (the thing being acted on).
 3. **Policy ID format** — the `policy_id` used in `enable`/`disable` is `<resource>:<version>` (or the principal equivalent). Verify via `get` first.
 4. **Skipping `version`** — always set `"version": "default"` unless you're versioning on purpose.
+5. **Using the role slug in `roles[]`** — Cerbos matches the bare role `name` (e.g. `Admin`), not the app-scoped slug (e.g. `hrapp-admin`) used everywhere else. The slug matches nothing, so every request is denied — silently, with no error at policy-create time. Get `name` from `manage_roles(action="list"/"create")`.
 
 ## When to escalate to raw Cerbos docs
 

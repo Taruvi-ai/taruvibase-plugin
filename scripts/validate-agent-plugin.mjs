@@ -233,13 +233,105 @@ function validateSkills() {
   }
 }
 
+const VENDOR_MANIFESTS = [
+  ".claude-plugin/plugin.json",
+  ".cursor-plugin/plugin.json",
+  ".github/plugin/plugin.json",
+  ".plugin/plugin.json",
+  "gemini-extension.json",
+];
+
+const VENDOR_MCP_CONFIGS = [
+  "agents/claude/.mcp.json",
+  "agents/copilot/.mcp.json",
+  "agents/open-plugin/.mcp.json",
+  "agents/cursor/mcp.json",
+];
+
+// Every MCP config, portable or vendor-specific, must reach the same OAuth
+// server without credentials.
+function collectServerUrls(value, found = []) {
+  if (!value || typeof value !== "object") return found;
+  for (const [key, child] of Object.entries(value)) {
+    if (["url", "httpUrl", "serverUrl"].includes(key) && typeof child === "string") {
+      found.push(child);
+    } else {
+      collectServerUrls(child, found);
+    }
+  }
+  return found;
+}
+
+function validateVendorAdapters() {
+  const rootManifest = readJson("plugin.json");
+  const rootMcp = readJson("mcp.json");
+  if (!rootManifest || !rootMcp) return;
+
+  const expectedUrl = rootMcp.mcpServers?.taruvi?.url;
+  if (!expectedUrl) {
+    fail("mcp.json must declare the taruvi server.");
+    return;
+  }
+
+  for (const manifestPath of VENDOR_MANIFESTS) {
+    const manifest = readJson(manifestPath);
+    if (!assertObject(manifest, manifestPath)) continue;
+
+    if (manifest.name !== rootManifest.name) {
+      fail(`${manifestPath} name must be ${rootManifest.name}`);
+    }
+    if (manifest.version !== rootManifest.version) {
+      fail(`${manifestPath} version must be ${rootManifest.version}`);
+    }
+
+    const skillPaths = [manifest.skills].flat().filter(Boolean);
+    for (const skillPath of skillPaths) {
+      if (skillPath.replace(/\/$/, "") !== "./skills") {
+        fail(`${manifestPath} skills must point at the shared ./skills/ directory.`);
+      }
+    }
+
+    if (typeof manifest.mcpServers === "string") {
+      assertContained(manifest.mcpServers);
+    } else if (manifest.mcpServers && !collectServerUrls(manifest.mcpServers).includes(expectedUrl)) {
+      fail(`${manifestPath} inline mcpServers must use ${expectedUrl}`);
+    }
+  }
+
+  for (const configPath of [...VENDOR_MCP_CONFIGS, "mcp.json", "gemini-extension.json"]) {
+    const config = readJson(configPath);
+    if (!config) continue;
+    const urls = collectServerUrls(config);
+    if (urls.length === 0) {
+      fail(`${configPath} declares no MCP server URL.`);
+    }
+    for (const url of urls) {
+      if (url !== expectedUrl) {
+        fail(`${configPath} uses ${url}; every MCP config must use ${expectedUrl}`);
+      }
+    }
+    if (/headers|Api-Key|api_key|\$\{/i.test(JSON.stringify(config))) {
+      fail(`${configPath} must not carry headers, keys, or placeholders; the server uses OAuth.`);
+    }
+  }
+
+  const marketplace = readJson(".claude-plugin/marketplace.json");
+  const entry = marketplace?.plugins?.find((plugin) => plugin.name === rootManifest.name);
+  if (!entry) {
+    fail(`.claude-plugin/marketplace.json must list ${rootManifest.name}`);
+  } else if (entry.version !== undefined && entry.version !== rootManifest.version) {
+    fail(`.claude-plugin/marketplace.json version must be ${rootManifest.version}`);
+  }
+}
+
 validatePluginManifest();
 validateMcpConfig();
 validateSkills();
+validateVendorAdapters();
 
 if (errors.length > 0) {
   console.error(errors.map((error) => `- ${error}`).join("\n"));
   process.exit(1);
 }
 
-console.log("Agent Plugins foundation is valid.");
+console.log("Plugin manifests, MCP configs, and skills are valid.");

@@ -1,0 +1,24 @@
+{
+  "name": "taruvi",
+  "version": "0.2.0",
+  "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, analytics, and Refine frontends.",
+  "author": {
+    "name": "Taruvi",
+    "url": "https://taruvibase.com"
+  },
+  "homepage": "https://taruvibase.com",
+  "repository": "https://github.com/Taruvi-ai/taruvibase-plugin",
+  "license": "MIT",
+  "keywords": [
+    "taruvi",
+    "taruvibase",
+    "backend",
+    "database",
+    "mcp",
+    "refine",
+    "functions",
+    "policies"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./agents/claude/.mcp.json"
+}

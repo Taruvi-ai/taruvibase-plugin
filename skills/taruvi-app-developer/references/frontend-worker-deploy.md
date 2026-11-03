@@ -4,61 +4,47 @@ Build the project, zip `dist/`, and deploy it to Taruvi Frontend Workers using t
 
 ## Workflow
 
-1. Confirm the project root contains `package.json` with a `build` script that produces `dist/`.
-2. Run the deploy script:
+1. Read `.env` or `.env.local` to get `TARUVI_SITE_URL`, `TARUVI_API_KEY`, `TARUVI_APP_SLUG`
+2. Build the app: `npm run build`
+3. Zip the dist folder: `zip -r dist.zip dist/` (or use a zip tool on Windows)
+4. Run the deploy script (path relative to project root):
+   ```bash
+   node skills/taruvi-app-developer/scripts/deploy-frontend.js "$TARUVI_SITE_URL" "$TARUVI_API_KEY" "$TARUVI_APP_SLUG"
+   ```
+5. Clean up: `rm -f dist.zip` (or delete manually on Windows)
 
-```bash
-node .codex/skills/taruvi-frontend-worker-deploy/scripts/deploy-frontend-worker.mjs \
-  --project-root /absolute/path/to/project
-```
-
-3. The script infers the site from `TARUVI_SITE_URL` by default. Pass `--site` only to override.
-4. Use `--dry-run` to validate the build and zip flow without uploading anything.
-5. If build fails due to missing tools, install project dependencies first, then retry.
-6. After upload, the script sets the newest build active automatically using `TARUVI_API_KEY`.
-
-## Environment Variable Mapping
+## Environment Variables
 
 | Env Var | Used As |
 |---|---|
-| `TARUVI_API_KEY` | `Authorization: Api-Key <value>` |
-| `TARUVI_APP_SLUG` | Preferred worker name + default `app` multipart field |
-| `TARUVI_SITE_URL` | Infer site from hostname when no explicit site is provided |
-| `TARUVI_FRONTEND_WORKER_SITE` | Optional override for the Taruvi site name |
-| `TARUVI_FRONTEND_WORKER_APP` | Optional override for the multipart `app` field (defaults to `TARUVI_APP_SLUG`) |
+| `TARUVI_API_KEY` | `Authorization: Api-Key <value>` header. **Never log or echo.** |
+| `TARUVI_APP_SLUG` | Worker name and app identifier |
+| `TARUVI_SITE_URL` | Base URL for API calls |
 
-Auth is read from the project `.env` or `.env.local`.
+## How the Script Works
 
-## API Endpoints
+1. Checks if `dist.zip` exists (fails if not)
+2. Fetches app settings to find existing worker slug
+3. If worker exists: uploads new build and activates it
+4. If no worker: creates new worker with app slug as subdomain
+5. Reports success with build UUID or worker slug
 
-```
-# List / Create
-https://api.taruvi.cloud/sites/<site>/api/cloud/frontend_workers/
+## Worker Name Selection
 
-# Detail / Patch
-https://api.taruvi.cloud/sites/<site>/api/cloud/frontend_workers/<worker-id-or-slug>/
-
-# Activate a build
-https://api.taruvi.cloud/sites/<site>/api/cloud/frontend_workers/<worker-id-or-slug>/set-active-build/
-```
-
-**Create multipart fields:** `name`, `is_internal`, `app`, `file`
-
-**Patch multipart fields:** `file`
-
-**Set-active-build body:** `{ build_uuid: "..." }`
-
-## Worker Name Selection Rules
-
-1. Use `TARUVI_APP_SLUG` as the first-choice worker name.
-2. Search the collection for an exact name match before creating a new worker.
-3. If a matching worker exists, patch it (don't create a duplicate).
-4. If create fails because the name already exists, search again and patch.
-5. If create fails because the name is invalid, retry with `<app-slug>-<timestamp>`.
+1. Uses `TARUVI_APP_SLUG` as the worker name
+2. If a worker already exists for the app, it patches that worker (no duplicates)
+3. New workers are created with `is_internal=true` and subdomain matching the app slug
 
 ## Safety Rules
 
-- Never print the API key in logs or responses.
-- Stop if the build fails or `dist/` is missing.
-- Keep the generated zip only when `--keep-zip` is passed.
-- The script sets `XDG_CONFIG_HOME` inside the project during builds so `refine build` does not fail on machines where home-directory config writes are blocked.
+- Never print the API key in logs or responses
+- Stop if `dist.zip` is missing
+- The script validates responses and reports errors clearly
+
+## Cross-Platform
+
+The script is written in Node.js and works on Linux, macOS, and Windows without additional dependencies.
+
+## Alternative
+
+If the project has `npm run deploy`, use that instead — it handles all steps automatically.

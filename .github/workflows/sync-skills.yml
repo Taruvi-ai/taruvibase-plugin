@@ -1,0 +1,39 @@
+name: Sync skills from taruvi-skills
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit-ish in Taruvi-ai/taruvi-skills.
+        required: false
+        default: main
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Sync skills
+        run: bash scripts/sync-skills.sh "${{ inputs.ref || 'main' }}"
+      - name: Validate
+        run: npm test
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-taruvi-skills
+          delete-branch: true
+          commit-message: "chore: sync skills from Taruvi-ai/taruvi-skills"
+          title: "chore: sync skills from Taruvi-ai/taruvi-skills"
+          body: |
+            Syncs `skills/taruvi-app-developer` and `skills/taruvi-refine-providers`
+            from [Taruvi-ai/taruvi-skills](https://github.com/Taruvi-ai/taruvi-skills),
+            the source of truth for those skills. Commit: see `skills/.taruvi-skills-commit`.

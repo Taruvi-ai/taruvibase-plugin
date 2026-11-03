@@ -72,7 +72,8 @@ When in doubt, see [`when-not-to-use-functions.md`](references/when-not-to-use-f
 | Worked function examples (8 scenarios) | [`function-scenarios.md`](references/function-scenarios.md) |
 | Cross-layer worked features | [`feature-workflow-examples.md`](references/feature-workflow-examples.md) |
 | Integration pitfalls | [`integration-pitfalls.md`](references/integration-pitfalls.md) |
-| Frontend Worker deploy | [`frontend-worker-deploy.md`](references/frontend-worker-deploy.md), [`deployment.md`](references/deployment.md) |
+| Frontend Worker deploy | [`frontend-worker-deploy.md`](references/frontend-worker-deploy.md) |
+| Export backend config | [`backend-export.md`](references/backend-export.md) |
 | Env var setup | [`env-setup.md`](references/env-setup.md) |
 
 ## Non-negotiables
@@ -116,4 +117,4 @@ Before reporting a function or analytics query done:
 
 ## Drift check
 
-`bash scripts/check-versions.sh` warns when pinned SDK/provider versions drift from the latest on PyPI/npm.
+`node scripts/check-versions.js` warns when pinned SDK/provider versions drift from the latest on PyPI/npm.
