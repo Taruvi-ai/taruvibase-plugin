@@ -64,32 +64,33 @@ Use module-native methods. Do not invent method names. Full reference: [`functio
 
 The mode must be set at creation time. Without it, the function cannot be routed and creation fails.
 
-### Examples — `manage_function`
+### Examples — function definitions
 
-```python
-# APP mode — custom Python logic
-manage_function(
-    action="create_update",
-    name="process-order",
-    execution_mode="app",
-    code="def main(params, user_data, sdk_client):\n    return {}"
-)
+Send these through the MCP server's function create/update tool (check its input schema for the exact shape):
 
-# PROXY mode — forward to a webhook
-manage_function(
-    action="create_update",
-    name="notify-slack",
-    execution_mode="proxy",
-    webhook_url="https://hooks.slack.com/services/xxx"
-)
+```jsonc
+// APP mode — custom Python logic
+{
+  "name": "process-order",
+  "execution_mode": "app",
+  "code": "def main(params, user_data, sdk_client):\n    return {}"
+}
 
-# SYSTEM mode — registered internal function
-manage_function(
-    action="create_update",
-    name="cleanup_logs",
-    execution_mode="system"
-)
+// PROXY mode — forward to a webhook
+{
+  "name": "notify-slack",
+  "execution_mode": "proxy",
+  "webhook_url": "https://hooks.slack.com/services/xxx"
+}
+
+// SYSTEM mode — registered internal function
+{
+  "name": "cleanup_logs",
+  "execution_mode": "system"
+}
 ```
+
+To change an existing function, update it by its slug rather than creating it again by name.
 
 ## Trigger types
 

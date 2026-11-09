@@ -70,7 +70,7 @@ Consuming Refine apps hard-wire a single app via `Client({ appSlug: "..." })`. I
 
 Taruvi intentionally splits:
 
-- **Control plane (MCP)**: `create_update_schema`, `manage_policies`, `manage_function`, `manage_secret_types`, `execute_raw_sql` — agent-time provisioning, may be destructive. Lives in `taruvi-app-developer`.
+- **Control plane (MCP)**: schema, policy, function, secret-type, and query provisioning — agent-time, may be destructive. Lives in `taruvi-app-developer`.
 - **Data plane (SDKs)**: CRUD on rows, file upload/download, function execution, policy checks — runtime consumption, never destroys schema. Lives in `taruvi-refine-providers` (frontend) and the function runtime (`taruvi-app-developer`, Python `sdk_client`).
 
 This is why you don't see `drop_table` in the JS SDK: schema mutations are control-plane by design. Keep this split in mind when deciding where to put logic:

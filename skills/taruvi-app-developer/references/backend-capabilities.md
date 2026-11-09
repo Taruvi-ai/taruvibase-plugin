@@ -79,7 +79,7 @@ Limits (defaults, env-configurable): max **3 hops** per chain, max **5 distinct 
 
 ## Aggregation
 
-REST params: `_aggregate`, `_group_by`, `_having`. Available through the Refine data provider's `meta` and the Python SDK; **not** via the `datatable_data` MCP tool (use `manage_query` or `execute_raw_sql` for MCP-side aggregation).
+REST params: `_aggregate`, `_group_by`, `_having`. Available through the Refine data provider's `meta` and the Python SDK; generally **not** via the MCP record-query tool (use an analytics query for MCP-side aggregation — or raw SQL if the server offers it).
 
 Supported functions: `count(*)`, `count(field)`, `count(distinct field)`, `sum`, `avg`, `min`, `max`, `array_agg`, `string_agg`, `json_agg`, `stddev`, `variance`.
 
@@ -147,7 +147,7 @@ Datatables run on either the `flat_table` provider (default, fully supported) or
 
 ### Bucket configuration
 
-| Field | Required | Default | MCP `create_bucket` |
+| Field | Required | Default | MCP bucket create |
 |---|---|---|---|
 | `name` | Yes | — | ✅ |
 | `app_category` | Yes | `assets` or `attachments` | ✅ |
@@ -175,6 +175,6 @@ Datatables run on either the `flat_table` provider (default, fully supported) or
 
 Sorting: single field, Django-style (`ordering=-date_joined`).
 
-Role assignments: separate from user CRUD (`manage_role_assignments`), max 100 roles × 100 usernames per call, supports `expires_at`.
+Role assignments: separate from user CRUD (dedicated assign/revoke operations), max 100 roles × 100 usernames per call, supports `expires_at`.
 
 User attributes: tenant-wide JSONB validated against a JSON Schema (admin-controlled). User preferences: per-user key-value (user-controlled).

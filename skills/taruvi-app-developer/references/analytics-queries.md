@@ -14,37 +14,28 @@ If neither applies, build it on the datatable provider. Registering and maintain
 
 ## Registering a query
 
+Create queries through the MCP server's analytics-query create tool. The examples show the query definition; check the tool's input schema for the exact shape and which fields (e.g. tags) it accepts.
+
 ### Internal (against tenant DB)
 
-```
-manage_query(
-  action="create",
-  name="daily-revenue",
-  description="Total revenue per day over a date range",
-  query_text="""
-    SELECT DATE(created_at) AS day, SUM(total) AS revenue
-    FROM orders
-    WHERE created_at BETWEEN {{ start_date }} AND {{ end_date }}
-      AND status = 'completed'
-    GROUP BY day
-    ORDER BY day DESC
-  """,
-  connection_type="internal",
-  tags=["reporting", "finance"]
-)
+```jsonc
+{
+  "name": "daily-revenue",
+  "description": "Total revenue per day over a date range",
+  "query_text": "SELECT DATE(created_at) AS day, SUM(total) AS revenue FROM orders WHERE created_at BETWEEN {{ start_date }} AND {{ end_date }} AND status = 'completed' GROUP BY day ORDER BY day DESC",
+  "connection_type": "internal"
+}
 ```
 
 ### External (against a separate database)
 
-```
-manage_query(
-  action="create",
-  name="crm-accounts",
-  query_text="SELECT id, name FROM accounts WHERE tier = {{ tier }}",
-  connection_type="external",
-  secret_key="CRM_DATABASE_URL",
-  tags=["crm"]
-)
+```jsonc
+{
+  "name": "crm-accounts",
+  "query_text": "SELECT id, name FROM accounts WHERE tier = {{ tier }}",
+  "connection_type": "external",
+  "secret_key": "CRM_DATABASE_URL"
+}
 ```
 
 External queries require a `secret_key` that points to an analytics-typed secret (`analytics-postgres`, `analytics-mysql`, etc.). Create the secret first — see [secrets-and-types.md](secrets-and-types.md).
@@ -53,7 +44,7 @@ External queries require a `secret_key` that points to an analytics-typed secret
 
 ## Jinja2 parameters
 
-Query text is rendered via Jinja2 at execution time:
+**Check the query tool's description for the placeholder rules before using anything beyond `{{ name }}`.** Some server versions bind each placeholder as a single value and reject Jinja expressions, filters, and control blocks; others render full Jinja2. Where full Jinja2 is supported, query text is rendered at execution time:
 
 - `{{ param_name }}` — escaped variable substitution.
 - `{% if ... %}` — conditional blocks for optional filters.
@@ -71,22 +62,17 @@ ORDER BY created_at DESC
 LIMIT {{ limit | default(100) }}
 ```
 
-Execution:
+Execution — run the query through the MCP server's query-run tool with its slug and params:
 
-```
-execute_query(query_slug="daily-revenue", params={"start_date": "2026-04-01", "end_date": "2026-04-17"})
+```jsonc
+{"query_slug": "daily-revenue", "params": {"start_date": "2026-04-01", "end_date": "2026-04-17"}}
 ```
 
-Returns `{success, data, total, execution_key}`.
+The result carries the rows (`data`), a `total`, and an `execution_key`.
 
 ## Managing queries
 
-```
-manage_query(action="list", search="revenue", limit=50)
-manage_query(action="get", query_slug="daily-revenue")
-manage_query(action="update", query_slug="daily-revenue", query_text="...", description="...")
-manage_query(action="delete", query_slug="daily-revenue")
-```
+The MCP server lets you list (with a name search), read by slug, update, and delete queries.
 
 Updates preserve the slug; only mutable fields (text, description, tags, connection) change.
 
@@ -102,7 +88,7 @@ Updates preserve the slug; only mutable fields (text, description, tags, connect
 
 ## Consumption paths
 
-- **MCP**: `execute_query(query_slug, params)` — for agents and back-end scripts.
+- **MCP**: the query-run tool, with the query slug and params — for agents.
 - **Refine frontend**: `useCustom` with `meta.kind: "analytics"` via the `app` data provider. See the `taruvi-refine-providers` skill.
 - **Python SDK (function body)**: `client.analytics.execute(query_slug, params)`. See [`function-sdk-reference.md`](function-sdk-reference.md).
 
@@ -112,4 +98,4 @@ Updates preserve the slug; only mutable fields (text, description, tags, connect
 2. **Inline parameter literals.** Always use Jinja2 `{{ name }}` — the executor handles escaping.
 3. **Very expensive queries with no `LIMIT`.** Add a `{{ limit | default(100) }}` safeguard.
 4. **Updating a query in use.** Consumers reference by slug — updating doesn't break them, but a change in column shape will. Coordinate schema changes with frontend updates.
-5. **Confusing `manage_query` and `execute_query`.** `manage_query` is the metadata surface (create/update/delete the definition); `execute_query` runs the query.
+5. **Confusing defining and running.** Creating/updating a query changes its definition; running it is a separate operation.

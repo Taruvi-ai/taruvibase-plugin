@@ -11,7 +11,7 @@ Gotchas that bite when features cross the MCP / function / frontend boundary. If
 **Fix**: Always provision policies **after** table creation and **before** any write. Verify with:
 
 ```
-manage_policies(action="get", name_regexp="^datatable:<name>$")
+<read the policies for datatable:<name> with the MCP policy tool>
 ```
 
 If empty, create the policy before the first insert.
@@ -33,12 +33,12 @@ If empty, create the policy before the first insert.
 
 ## Function metadata vs function body divergence
 
-**Symptom**: `manage_function(action="create_update", code="<body>")` succeeds but calling `execute_function` still runs old code.
+**Symptom**: saving a function with new `code` succeeds but running it still runs old code.
 
 **Cause**: Taruvi compiles/caches function bodies. Metadata and code updates go through the same call but the runtime may need a moment to pick up the change. Alternatively, you might be looking at a cached proxy response in dev.
 
 **Fix**:
-1. Confirm the update: `manage_function(action="get", function_slug="<slug>")` — the `code` field should match what you sent.
+1. Confirm the update: read the function back by slug — the `code` field should match what you sent. If you saved by name rather than slug, check you didn't create a second function.
 2. Give it ~2 seconds and retry.
 3. If still stale, check `is_active=True` — an inactive function won't re-deploy.
 
@@ -142,11 +142,11 @@ useUpdateMany({
 
 ## Foreign key to a table not yet materialized
 
-**Symptom**: `create_update_schema` fails with "foreign key references resource X which does not exist."
+**Symptom**: saving a table schema fails with "foreign key references resource X which does not exist."
 
 **Cause**: In a multi-resource datapackage, resources with FKs to other resources in the same package must come **after** their targets.
 
-**Fix**: Order `resources[]` so referenced tables come first. Or submit in two separate `create_update_schema` calls.
+**Fix**: Order `resources[]` so referenced tables come first. Or submit in two separate schema saves.
 
 ## Generic add-to-this-list note
 

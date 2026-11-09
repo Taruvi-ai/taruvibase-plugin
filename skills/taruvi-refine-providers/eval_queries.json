@@ -13,7 +13,7 @@
   { "query": "useGetIdentity is returning a stale user after an admin revoked the user's role — they still see the old permissions until they log out", "should_trigger": true },
   { "query": "write a Python serverless function with sdk_client that cleans up orphaned task attachments — fires on RECORD_DELETE for tasks", "should_trigger": false },
   { "query": "create a Cerbos policy for the invoices datatable, only managers and the owner can update", "should_trigger": false },
-  { "query": "run execute_raw_sql to backfill the new tenant_id column on the orders table", "should_trigger": false },
+  { "query": "run raw SQL to backfill the new tenant_id column on the orders table", "should_trigger": false },
   { "query": "register a new analytics query called weekly-revenue that aggregates orders by week — internal connection_type", "should_trigger": false },
   { "query": "help me set up authentication with Firebase", "should_trigger": false },
   { "query": "configure Redux state management in my React app", "should_trigger": false },

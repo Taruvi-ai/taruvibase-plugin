@@ -25,18 +25,17 @@ System types (category = `TYPE_SYSTEM`) cover common credentials:
 
 System types **cannot be modified or deleted**. Check what exists first:
 
-```
-manage_secret_types(action="list", type_filter="system")
-```
+List the secret types through the MCP server, filtered to system types.
 
 ## Creating a custom type
 
-```
-manage_secret_types(
-  action="create",
-  name="stripe-cred",
-  description="Stripe API credentials with webhook secret",
-  schema={
+Create it through the MCP server's secret-type create tool:
+
+```jsonc
+{
+  "name": "stripe-cred",
+  "description": "Stripe API credentials with webhook secret",
+  "schema": {
     "type": "object",
     "required": ["publishable_key", "secret_key"],
     "properties": {
@@ -45,8 +44,8 @@ manage_secret_types(
       "webhook_secret": {"type": "string"}
     }
   },
-  sensitivity_level="sensitive"
-)
+  "sensitivity_level": "sensitive"
+}
 ```
 
 - `name` must match `^[a-zA-Z0-9_-]+$`.
@@ -55,39 +54,31 @@ manage_secret_types(
 
 ## Creating a secret
 
-```
-create_update_secret(
-  key="STRIPE_PROD",
-  value={"publishable_key": "pk_live_...", "secret_key": "sk_live_...", "webhook_secret": "whsec_..."},
-  secret_type="stripe-cred",
-  tags=["prod", "payments"]
-)
+Save it through the MCP server's secret create/update tool:
+
+```jsonc
+{
+  "key": "STRIPE_PROD",
+  "value": {"publishable_key": "pk_live_...", "secret_key": "sk_live_...", "webhook_secret": "whsec_..."},
+  "secret_type": "stripe-cred"
+}
 ```
 
 - Scalar values are fine too: `value="sk_live_..."` against a type whose schema is `{"type": "string"}`.
-- Tags are created on-the-fly if they don't exist.
+- Tags may be supported — check the tool's input schema.
 - `app_slug` falls back to the current app context.
 
 ## Reading secrets
 
-Single:
-```
-get_secret(key="STRIPE_PROD")
-```
-
-Returns `{key, secret_type, app, tags, value, sensitivity_level}`. The `value` field is `"[ENCRYPTED]"` for `private` and `sensitive` secrets — you cannot decrypt via the MCP surface for non-`public` secrets.
+Read a secret by key through the MCP server. The result includes the key, type, value, and sensitivity level. The `value` field is `"[ENCRYPTED]"` for `private` and `sensitive` secrets — you cannot decrypt via the MCP surface for non-`public` secrets.
 
 Inside a function body (via Python SDK), the runtime decrypts transparently — that's the correct path for reading sensitive values at runtime.
 
-Listing:
-```
-list_secrets(secret_type="stripe-cred", tags="prod", limit=20)
-list_secrets(list_types=True)   # list types, not values
-```
+Listing: the MCP server can list secrets (filtered by type or search) and, separately, list secret types.
 
 ## 2-tier inheritance
 
-When you call `get_secret(key="X")` inside an app context:
+When you read secret `X` inside an app context:
 
 1. Look for `X` at **app level** (in the current app's scope).
 2. Fall back to **tenant level** (shared across apps in this tenant).
@@ -98,10 +89,7 @@ Config → env → app-level secret → tenant-level secret. First match wins.
 
 Analytics queries with `connection_type="external"` require a `secret_key` that points to a secret whose type is one of the analytics driver types (e.g., `analytics-postgres`, `analytics-mysql`). The `driver` field in the secret's JSON value is parsed to route the connection correctly.
 
-Listing analytics-only secrets:
-```
-list_secrets(analytics_only=True)
-```
+Listing analytics-only secrets: the secret list operation can usually filter to analytics types.
 
 ## Common mistakes
 
@@ -110,4 +98,4 @@ See also: Gotchas in SKILL.md for cross-cutting warnings (type-first rule, sensi
 1. **Expecting to read `sensitive` values via MCP** — masked by design. Use the Python SDK inside a function body.
 2. **Duplicate `name` for types** — blocked. Types are unique by name.
 3. **Deleting a type with existing secrets** — blocked by FK constraint. Delete or migrate secrets first.
-4. **Forgetting `app_slug` outside an app context** — `create_update_secret` enforces app-level scope on the MCP surface. Make sure the app context is set or pass `app_slug` explicitly.
+4. **Forgetting the app outside an app context** — the MCP secret save enforces app-level scope. Make sure the app context is set or pass the app explicitly.

@@ -8,12 +8,11 @@ description: >
   multi-resource cascades, event/cron handlers, public webhooks, and external
   API calls. Triggers: "create a datatable", "Frictionless schema", "Cerbos
   policy", "serverless function", "scheduled job", "analytics query",
-  "sdk_client", `manage_function`, `execute_raw_sql`. Skip for Refine
+  "sdk_client", "Taruvi MCP". Skip for Refine
   frontend work — use `taruvi-refine-providers` instead.
 license: Apache-2.0
 compatibility: >
-  Requires the Taruvi MCP server for provisioning tasks (tools prefixed
-  `Taruvi:`). Python function bodies run inside the Taruvi function runtime
+  Requires the Taruvi MCP server for provisioning tasks. Python function bodies run inside the Taruvi function runtime
   (Celery workers) with an injected, pre-authenticated `sdk_client`.
 metadata:
   author: EOX Vantage
@@ -29,6 +28,10 @@ Single backend skill for Taruvi. Covers two layers:
 - **Data plane (function runtime)** — Python bodies with signature `def main(params, user_data, sdk_client)` running on Celery workers with a pre-authenticated `sdk_client`.
 
 If the task is wiring React/Refine providers or hooks on the frontend, switch to `taruvi-refine-providers`.
+
+## MCP tool names
+
+This skill describes MCP **operations** ("save a table schema", "run a function"), not tool names — the server's tool names and argument shapes change over time. Pick the tool from the connected server's tool list whose description matches the operation, and follow that tool's description and input schema. When the live tool description disagrees with this skill, the tool description wins. If no tool covers an operation, say so and use the SDK, REST API, or Console instead of guessing a name.
 
 ## Decision: function or just MCP provisioning?
 
@@ -49,19 +52,20 @@ When in doubt, see [`when-not-to-use-functions.md`](references/when-not-to-use-f
 
 ## Workflow
 
-1. Read [`architecture-overview.md`](references/architecture-overview.md) once for the runtime split; for greenfield apps also scaffold an `AGENTS.md` from [`agents-md-template.md`](references/agents-md-template.md).
-2. Decide function vs provisioning (above). Before writing function code, read [`function-authoring.md`](references/function-authoring.md) and the relevant section of [`function-sdk-reference.md`](references/function-sdk-reference.md).
-3. For MCP work, open [`mcp-tool-quickref.md`](references/mcp-tool-quickref.md) and the task-specific reference below.
-4. For destructive ops, follow the destructive-op protocol (below).
-5. Verify by re-reading the resource (`get_datatable_schema`, `manage_policies(action="get")`, etc.) and executing functions / analytics queries end-to-end before reporting done.
+1. Confirm the MCP connection: list the apps this connection covers and check it's the intended site and app.
+2. Read [`architecture-overview.md`](references/architecture-overview.md) once for the runtime split; for greenfield apps also scaffold an `AGENTS.md` from [`agents-md-template.md`](references/agents-md-template.md).
+3. Decide function vs provisioning (above). Before writing function code, read [`function-authoring.md`](references/function-authoring.md) and the relevant section of [`function-sdk-reference.md`](references/function-sdk-reference.md).
+4. For MCP work, open [`mcp-tool-quickref.md`](references/mcp-tool-quickref.md) and the task-specific reference below.
+5. For destructive ops, follow the destructive-op protocol (below).
+6. Verify by re-reading the resource (the table schema, the policy, etc.) and executing functions / analytics queries end-to-end before reporting done.
 
 ## Reference index
 
 | Task | Read |
 |---|---|
-| MCP tool signatures | [`mcp-tool-quickref.md`](references/mcp-tool-quickref.md) |
+| MCP operations and gotchas | [`mcp-tool-quickref.md`](references/mcp-tool-quickref.md) |
 | Frictionless schema (FKs, indexes, hierarchy, graph) | [`datatable-schema-patterns.md`](references/datatable-schema-patterns.md) |
-| Cerbos policy authoring | [`cerbos-policy-cookbook.md`](references/cerbos-policy-cookbook.md) — or `get_ai_docs(category="policies", topic="guide")` |
+| Cerbos policy authoring | [`cerbos-policy-cookbook.md`](references/cerbos-policy-cookbook.md) — or the server's policy docs (MCP resources or docs tool) |
 | Secrets and custom secret types | [`secrets-and-types.md`](references/secrets-and-types.md) |
 | Audited raw SQL | [`raw-sql-safety.md`](references/raw-sql-safety.md) |
 | Analytics queries (registration + Jinja2 params) | [`analytics-queries.md`](references/analytics-queries.md) |
@@ -81,8 +85,8 @@ When in doubt, see [`when-not-to-use-functions.md`](references/when-not-to-use-f
 Most of these are wired into the references too — listed here because skipping them causes real bugs.
 
 1. **Trust the MCP tool, not memory.** Tool responses carry the IDs/slugs/status you need next. Don't invent endpoints or method names.
-2. **`create_update_schema` drops fields missing from the payload.** Always `get_datatable_schema` first, then send the full preserved field list.
-3. **`manage_policies(action="create_update")` replaces — does not merge.** Get the existing policy first, mutate, and send the full body back.
+2. **Saving a table schema drops fields missing from the payload.** Always read the current schema first, then send the full preserved field list.
+3. **Saving a policy replaces it — does not merge.** Read the existing policy first, mutate, and send the full body back.
 4. **Function signature is exactly `def main(params, user_data, sdk_client):`.** Any deviation → immediate `SandboxError`.
 5. **Never re-authenticate `sdk_client`.** It's pre-authenticated. No `client.auth()`, no `client.login()`, no API keys passed in.
 6. **Never hardcode secrets.** Use `sdk_client.secrets.get("KEY")`.
@@ -93,9 +97,9 @@ Most of these are wired into the references too — listed here because skipping
 
 ## Destructive-op protocol
 
-Applies to: `delete_datatable` (especially `force=True`), `manage_policies(action="create_update")` on an existing policy, `user_attributes_schema(action="update")`, `manage_secret_types(action="delete")`, `manage_function(action="delete")`, `manage_roles(action="delete")`, and any `execute_raw_sql` containing `DROP`, `TRUNCATE`, destructive `ALTER`, or `DELETE` without `WHERE`.
+Applies to: deleting tables, records, functions, roles, secret types, or queries; saving a table schema that removes or narrows a field; saving over an existing policy; disabling a policy; replacing the user attributes schema; revoking roles; and any raw SQL (if the server offers it) containing `DROP`, `TRUNCATE`, destructive `ALTER`, or `DELETE` without `WHERE`.
 
-1. **Plan** — inspect current state (`get_datatable_schema`, `manage_policies(action="get")`, …) and state what will be deleted/replaced and what depends on it.
+1. **Plan** — inspect current state (read the table schema, the policy, …) and state what will be deleted/replaced and what depends on it.
 2. **Validate** — surface the blast radius in plain language ("This will drop `orders` and 3 dependent FKs in `invoices`"). Get explicit user confirmation.
 3. **Execute** — only after confirmation. Report the tool's response verbatim.
 
@@ -111,7 +115,7 @@ After provisioning, create test users so the user can verify the app works:
 
 Before reporting a function or analytics query done:
 
-1. Run `execute_function(function_slug=..., params={...})` or `execute_query(query_slug=..., params={...})` with realistic sample params.
+1. Run the function or analytics query through the MCP server with realistic sample params.
 2. Inspect the actual response shape.
 3. Confirm any frontend code uses the exact field names and structure returned — fix the frontend if they don't match.
 

@@ -46,13 +46,13 @@ Verification:
 
 1. Inspect existing `posts` and `authors` schemas:
    ```
-   get_datatable_schema(table_name="posts")
-   get_datatable_schema(table_name="authors")
+   # MCP: read the table schemas for posts and authors
    ```
 
 2. Create the `comments` table (include existing tables in the datapackage only if modifying; otherwise a standalone resource is fine):
    ```
-   create_update_schema(datapackage={
+   # MCP: save table schema — send this datapackage
+   {
      "resources": [
        {
          "name": "comments",
@@ -77,12 +77,13 @@ Verification:
          }
        }
      ]
-   })
+   }
    ```
 
 3. Create the policy:
    ```
-   manage_policies(action="create_update", policy_data={
+   # MCP: save policy — Cerbos policy body (match the save tool's input schema)
+   {
      "apiVersion": "api.cerbos.dev/v1",
      "resourcePolicy": {
        "resource": "datatable:comments",
@@ -112,7 +113,7 @@ Verification:
          }
        ]
      }
-   })
+   }
    ```
 
 **Step 2: frontend** (delegate to `taruvi-refine-providers`).
@@ -161,15 +162,16 @@ Verification:
 
 **Step 1: register function metadata** (`taruvi-app-developer`):
 
-```
-manage_function(action="create_update",
-  name="cleanup-expired-sessions",
-  execution_mode="app",
-  code="<placeholder>",  # will overwrite in step 2
-  description="Daily cleanup of expired session rows",
-  is_active=True,
-  async_mode=False,
-)
+```jsonc
+// MCP: create function
+{
+  "name": "cleanup-expired-sessions",
+  "execution_mode": "app",
+  "code": "<placeholder>",  // will overwrite in step 3
+  "description": "Daily cleanup of expired session rows",
+  "is_active": true,
+  "async_mode": false
+}
 ```
 
 **Step 2: write body** (`taruvi-app-developer`, function-authoring section):
@@ -203,22 +205,21 @@ def main(params, user_data, sdk_client):
 
 **Step 3: re-register with real body** (back to `taruvi-app-developer`):
 
-```
-manage_function(action="create_update",
-  function_slug="cleanup-expired-sessions",
-  code=<body-above>,
-)
+```jsonc
+// MCP: update function by slug
+{
+  "function_slug": "cleanup-expired-sessions",
+  "code": "<body-above>"
+}
 ```
 
 **Step 4: test** (`taruvi-app-developer`):
 
-```
-execute_function(function_slug="cleanup-expired-sessions", params={}, async_mode=False)
-```
+Run the function synchronously through the MCP server with `function_slug="cleanup-expired-sessions"` and empty params.
 
-Check the response for `deleted: N`. If it errors, read the `logs` in the response.
+Check the result for `deleted: N`. If it errors, read the logs in the response.
 
-**Step 5: schedule**. Taruvi's MCP doesn't schedule — use Django-admin cron or a `django-celery-beat` periodic task added via Django admin. Document in the app's `AGENTS.md`.
+**Step 5: schedule**. If the MCP server has no schedule tool, set the cron schedule on the function in Console (or via the REST API). Document in the app's `AGENTS.md`.
 
 ---
 
@@ -258,9 +259,10 @@ Verification:
 **Step 1: modify `users` schema** (`taruvi-app-developer`):
 
 ```
-get_datatable_schema(table_name="users")   # inspect current
+# MCP: read the users table schema (inspect current)
 # ... preserve all existing fields + add avatar_path
-create_update_schema(datapackage={
+# MCP: save table schema — send this datapackage
+{
   "resources": [
     {
       "name": "users",
@@ -273,18 +275,19 @@ create_update_schema(datapackage={
       }
     }
   ]
-})
+}
 ```
 
 **Step 2: create bucket** (`taruvi-app-developer`):
 
-```
-manage_storage(action="create_bucket",
-  name="user-avatars",
-  visibility="private",
-  app_category="assets",
-  max_size_bytes=2097152,
-)
+```jsonc
+// MCP: create bucket (check the tool's input schema for size-limit support)
+{
+  "name": "user-avatars",
+  "visibility": "private",
+  "app_category": "assets",
+  "max_size_bytes": 2097152
+}
 ```
 
 **Step 3: update policies** (`taruvi-app-developer`):
@@ -292,15 +295,16 @@ manage_storage(action="create_bucket",
 Get current `datatable:users` policy, append an update rule:
 
 ```
-manage_policies(action="get", policy_id="datatable:users:default")
+# MCP: read the datatable:users policy
 # modify rules in place, then:
-manage_policies(action="create_update", policy_data={...existing with new rule...})
+# MCP: save policy with {...existing with new rule...}
 ```
 
 Create `bucket:user-avatars` policy:
 
 ```
-manage_policies(action="create_update", policy_data={
+# MCP: save policy — Cerbos policy body (match the save tool's input schema)
+{
   "apiVersion": "api.cerbos.dev/v1",
   "resourcePolicy": {
     "resource": "bucket:user-avatars",
@@ -319,7 +323,7 @@ manage_policies(action="create_update", policy_data={
       }
     ]
   }
-})
+}
 ```
 
 **Step 4: build upload UI** (`taruvi-refine-providers`):
@@ -363,7 +367,7 @@ function AvatarUpload() {
 
 ## Pattern takeaways
 
-1. **Always inspect before modifying.** `get_datatable_schema`, `manage_policies(action="get")` before any change to existing resources.
+1. **Always inspect before modifying.** Read the table schema and existing policies before any change to existing resources.
 2. **Plan first, execute in order.** Schema → storage buckets → policies → function metadata → function bodies → frontend.
 3. **Policies for new resources before first write.** A missing policy 403s the first insert.
 4. **Keep the plan scoped.** Don't bundle unrelated changes into one feature rollout.
