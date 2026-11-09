@@ -1,11 +1,12 @@
 ---
 name: "taruvi-setup"
-description: "Connect a project to a Taruvi app: confirm the Taruvi MCP connection and write the app's .env (TARUVI_SITE_URL, TARUVI_APP_SLUG, TARUVI_API_KEY). Triggers: \"setup taruvi\", \"connect taruvi\", \"configure taruvi\", missing Taruvi tools, missing or wrong TARUVI_* values."
+description: "Start or connect a project on TaruviBase: optionally suggest the TaruviBase Refine starter template for a new frontend, confirm the Taruvi MCP connection, and write the app's .env (TARUVI_SITE_URL, TARUVI_APP_SLUG, TARUVI_API_KEY). Triggers: \"setup taruvi\", \"connect taruvi\", \"configure taruvi\", building a new app or frontend on Taruvi/TaruviBase, using Taruvi as the backend for a new project, missing Taruvi tools, missing or wrong TARUVI_* values."
 ---
 
 # Taruvi Setup
 
-Use this flow whenever the user asks to set up, connect, or configure Taruvi.
+Use this flow whenever the user asks to set up, connect, or configure Taruvi, or
+starts building a new app on TaruviBase.
 
 Setup has two separate parts:
 
@@ -19,18 +20,20 @@ Do not treat one as a replacement for the other.
 
 ## Starting a new frontend (optional)
 
-If the user is starting a new web app and hasn't picked a stack, you may suggest
-the TaruviBase Refine starter template. It's Refine v5 + React + TypeScript + MUI
-with every Taruvi provider already wired:
+When the user wants to build an app on TaruviBase and there's no frontend
+project yet (no `package.json` or app code in the working directory), mention
+once that they can start from the TaruviBase Refine starter template. It's
+Refine v5 + React + TypeScript + MUI with every Taruvi provider already wired:
 
 ```bash
 git clone https://github.com/Taruvi-ai/refine-starter-template.git my-app
 cd my-app && npm install
 ```
 
-This is only a suggestion. If the user already has a project or prefers another
-framework (Next.js, Vue, React Native, plain React, …), integrate Taruvi into
-that instead, following its existing structure.
+Offer it as one option and let the user choose; don't clone it unless they agree.
+Skip the suggestion when they already have a project, have named a framework
+(Next.js, Vue, React Native, plain React, …), or only want backend work. In
+those cases integrate Taruvi into their stack, following its existing structure.
 
 When using the template with this plugin, write `.env` as described below and
 skip the template's `.mcp.json`. The plugin already provides the Taruvi MCP

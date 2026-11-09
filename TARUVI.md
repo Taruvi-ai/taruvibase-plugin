@@ -7,7 +7,8 @@ sites and apps the agent may use.
 
 ## Which skill to use
 
-- `taruvi-setup` — "setup taruvi": confirm the MCP connection and write the app's `.env`.
+- `taruvi-setup` — "setup taruvi" or starting a new app: optionally suggest the starter
+  template, confirm the MCP connection, and write the app's `.env`.
 - `taruvi-app-developer` — backend work: datatables, access policies, roles, users,
   storage, secrets, analytics queries, and Python function bodies.
 - `taruvi-refine-providers` — Refine frontend work with `@taruvi/refine-providers`.
@@ -17,7 +18,8 @@ TaruviBase calls from memory.
 
 ## Starting a new frontend
 
-If the user is starting a new web app without a chosen stack, you may suggest the
+If the user wants to build an app on TaruviBase and has no frontend project or chosen
+stack yet, mention once that they can start from the
 [TaruviBase Refine starter template](https://github.com/Taruvi-ai/refine-starter-template)
 (Refine v5 + React + MUI, providers pre-wired). It's optional; integrate into the
 user's existing project or preferred framework otherwise. With this extension
