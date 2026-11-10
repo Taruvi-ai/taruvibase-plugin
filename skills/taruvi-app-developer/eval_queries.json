@@ -9,7 +9,7 @@
   { "query": "I need to import 50k rows from a csv into the users table. write an async function with is_async=True and surface task_id polling", "should_trigger": true },
   { "query": "create a custom secret type for stripe credentials (publishable_key, secret_key, webhook_secret) with sensitivity_level=sensitive, then store the prod creds", "should_trigger": true },
   { "query": "provision a storage bucket called user-avatars, private visibility, app_category=assets, max 2MB per file", "should_trigger": true },
-  { "query": "the manage_function call keeps failing with 'execution_mode required' — I'm passing code but no mode", "should_trigger": true },
+  { "query": "the MCP function save keeps failing with 'execution_mode required' — I'm passing code but no mode", "should_trigger": true },
   { "query": "drop the legacy_orders_archive table and all its FKs — give me a destructive-op plan first", "should_trigger": true },
   { "query": "wire up dataProvider, storageDataProvider, appDataProvider, userDataProvider into <Refine> in App.tsx", "should_trigger": false },
   { "query": "I'm getting a 401 right after login from useGetIdentity, looks like the token isn't being attached to subsequent requests", "should_trigger": false },

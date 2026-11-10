@@ -1,0 +1,19 @@
+{
+  "name": "taruvi",
+  "description": "Official TaruviBase plugin marketplace.",
+  "owner": {
+    "name": "Taruvi",
+    "url": "https://taruvibase.com"
+  },
+  "plugins": [
+    {
+      "name": "taruvi",
+      "source": {
+        "source": "github",
+        "repo": "Taruvi-ai/taruvibase-plugin"
+      },
+      "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, analytics, and Refine frontends.",
+      "version": "0.2.0"
+    }
+  ]
+}

@@ -1,40 +1,11 @@
 {
-  "name": "@taruvi/agents-plugin",
-  "version": "0.1.0",
-  "description": "Installer for Taruvi agent support across Claude, Codex, Cursor, and Kiro.",
+  "name": "@taruvi/taruvibase-plugin",
+  "version": "0.2.0",
+  "private": true,
+  "description": "TaruviBase plugin for Claude Code, Cursor, Codex, GitHub Copilot, Gemini CLI, Kiro, and other agents.",
   "type": "module",
-  "bin": {
-    "taruvi-agents-plugin": "./bin/taruvi-agents-plugin.js"
-  },
   "scripts": {
-    "build:vendor-files": "bash scripts/build-vendor-files.sh",
-    "validate:agent-plugin": "node scripts/validate-agent-plugin.mjs",
-    "validate:vendors": "node scripts/validate-vendor-files.mjs",
-    "prepack": "npm run build:vendor-files",
-    "test": "npm run validate:agent-plugin && npm run build:vendor-files && npm run validate:vendors && node bin/taruvi-agents-plugin.js install --target /tmp/taruvi-agents-plugin-test --force --allow-non-template"
-  },
-  "files": [
-    "bin/",
-    "mcp.json",
-    "llms.txt",
-    "payload/",
-    "plugin.json",
-    "scripts/",
-    "skills/",
-    "src/",
-    "README.md"
-  ],
-  "keywords": [
-    "taruvi",
-    "agents",
-    "plugin",
-    "codex",
-    "claude",
-    "cursor",
-    "kiro"
-  ],
-  "author": {
-    "name": "Taruvi"
+    "test": "node scripts/validate-agent-plugin.mjs"
   },
   "license": "MIT",
   "engines": {

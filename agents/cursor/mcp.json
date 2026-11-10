@@ -1,0 +1,6 @@
+{
+  "taruvi": {
+    "type": "http",
+    "url": "https://mcp.taruvibase.com/mcp"
+  }
+}

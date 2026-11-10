@@ -1,6 +1,6 @@
 # Datatable schema patterns (Frictionless + Taruvi extensions)
 
-The full shape of the `datapackage` argument to `create_update_schema`. Taruvi follows [Frictionless Data Package](https://specs.frictionlessdata.io/data-package/) plus Taruvi-specific extensions.
+The full shape of the table resources you send to the MCP server's table-schema save tool. Taruvi follows [Frictionless Data Package](https://specs.frictionlessdata.io/data-package/) plus Taruvi-specific extensions.
 
 Source of truth: <https://test-docs.taruvi.cloud/docs/data-service/> — `guides/migrations`, `/hierarchy`, `/graph-traversal`, `/relationships`, `/imports`.
 
@@ -219,7 +219,7 @@ No per-table `<table>_audit`, no row ETag / optimistic concurrency, no CDC / cha
 
 ## Schema evolution
 
-Resubmitting via `create_update_schema` (or `PATCH`) triggers a migration. Changes are classified:
+Resubmitting a table schema (via the MCP schema save tool or REST `PATCH`) triggers a migration. Changes are classified:
 
 | Safe | Destructive |
 |---|---|
@@ -231,7 +231,7 @@ Resubmitting via `create_update_schema` (or `PATCH`) triggers a migration. Chang
 | Add foreign key, index | |
 | Rename column with `x-rename-from` | |
 
-**Destructive changes are rejected via MCP.** `create_update_schema` does not expose an `allow_data_loss` opt-in — to force one through you have to call the REST `PATCH` directly with `allow_data_loss=true`. Prefer reworking the schema (add a default, widen instead of narrowing, two-step migrate) over forcing it.
+**Destructive changes may be rejected via MCP.** Check the schema save tool's description for an `allow_data_loss`-style opt-in; if there is none, forcing one through means calling the REST `PATCH` directly with `allow_data_loss=true`. Prefer reworking the schema (add a default, widen instead of narrowing, two-step migrate) over forcing it.
 
 ### Column rename
 
@@ -243,7 +243,7 @@ Without the hint, the materializer treats it as drop + add and loses data.
 
 ### Adding a NOT NULL column to a populated table
 
-Either supply a `default` (single safe step) or run the three-step pattern: add nullable → populate via `datatable_data` upsert / raw SQL → resubmit with `required: true`.
+Either supply a `default` (single safe step) or run the three-step pattern: add nullable → populate via a record upsert (or a function) → resubmit with `required: true`.
 
 ### Revision history & rollback
 
@@ -253,7 +253,7 @@ Rollback caveats: dropped column data is not recoverable; an already-rolled-back
 
 ### Imports
 
-Imports use the same Frictionless data package shape. `create_update_schema` always materializes the physical tables — the MCP tool exposes no `dry_run`, `validate_only`, `force_recreate`, or `allow_data_loss`.
+Imports use the same Frictionless data package shape. The MCP schema save tool materializes the physical tables; check its description for `dry_run` / `validate_only`-style options before relying on them.
 
 ## Conventions
 

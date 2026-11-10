@@ -1,23 +1,45 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "taruvi-agents-plugin",
-  "version": "0.1.0",
-  "description": "Portable Taruvi skills for building Taruvi apps with agent clients.",
+  "name": "taruvi",
+  "version": "0.2.0",
+  "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, analytics, and Refine frontends.",
   "author": {
-    "name": "Taruvi"
+    "name": "Taruvi",
+    "url": "https://taruvibase.com"
   },
+  "homepage": "https://taruvibase.com",
+  "repository": "https://github.com/Taruvi-ai/taruvibase-plugin",
   "license": "MIT",
   "keywords": [
     "taruvi",
-    "agents",
-    "skills",
+    "taruvibase",
+    "backend",
+    "database",
+    "mcp",
     "refine",
-    "mcp"
+    "functions",
+    "policies"
   ],
   "extensions": {
-    "cloud.taruvi.agents": {
-      "vendorPayload": "./payload",
-      "installer": "./bin/taruvi-agents-plugin.js"
+    "com.openai": {
+      "interface": {
+        "displayName": "TaruviBase",
+        "shortDescription": "TaruviBase skills and MCP tools for Codex",
+        "longDescription": "Official TaruviBase plugin. Includes skills for TaruviBase backend and Refine frontend development, plus the TaruviBase MCP server for managing your app directly from the agent.",
+        "developerName": "Taruvi",
+        "category": "Coding",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "websiteURL": "https://taruvibase.com",
+        "defaultPrompt": [
+          "List the data tables in my TaruviBase app.",
+          "Build a Refine list page for one of my TaruviBase tables.",
+          "Write a TaruviBase function that runs when a record is created."
+        ],
+        "brandColor": "#1AB3E6"
+      }
     }
   }
 }

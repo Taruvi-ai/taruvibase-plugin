@@ -1,111 +1,62 @@
 ---
-title: Taruvi Agents Plugin
-description: Source of truth for Taruvi agent support across Claude, Codex, Cursor, and Kiro.
+title: TaruviBase Agent Plugin
+description: TaruviBase skills and MCP access for Claude Code, Cursor, Codex, GitHub Copilot, Gemini CLI, Kiro, and other agents.
 type: overview
 ---
 
-# Taruvi Agents Plugin
+# TaruviBase Agent Plugin
 
-Taruvi Agents Plugin packages reusable agent support for Taruvi projects. It
-installs shared Taruvi skills and client-specific setup files for Claude,
-Codex, Cursor, and Kiro.
+The TaruviBase Agent Plugin bundles TaruviBase skills and the TaruviBase MCP server
+(`https://mcp.taruvibase.com/mcp`, OAuth) for many AI coding agents from one shared
+`skills/` directory.
 
-Use this file as the agent-facing index for the repository. For human setup
-instructions, start with [README.md](README.md).
-
-## Installation
-
-From a cloned Taruvi template, run:
-
-```bash
-npx @taruvi/agents-plugin install
-```
-
-The installer writes agent support files into the current project:
-
-- `.agents/skills/`
-- `.claude/`
-- `.codex/`
-- `.cursor/`
-- `.kiro/`
-
-It does not request credentials, create `.env`, or write local MCP secrets.
-After installation, open the target agent and ask it to:
-
-```text
-setup taruvi
-```
-
-## Repository Map
-
-- [README.md](README.md) - package overview, install command, and development commands.
-- [package.json](package.json) - npm package metadata, scripts, and publish allowlist.
-- [bin/taruvi-agents-plugin.js](bin/taruvi-agents-plugin.js) - installer CLI.
-- [scripts/build-vendor-files.sh](scripts/build-vendor-files.sh) - builds the installer payload from source files.
-- [src/shared/setup-core.md](src/shared/setup-core.md) - shared setup flow used by vendor-specific setup skills.
-- [src/skills/](src/skills/) - shared Taruvi skills installed for supported clients.
-- [src/vendors/](src/vendors/) - client-specific support files for Claude, Codex, Cursor, and Kiro.
+Use this file as the agent-facing index for the repository. For install steps,
+start with [README.md](README.md). For the repository layout and editing rules,
+read [AGENTS.md](AGENTS.md).
 
 ## Skills
 
+### taruvi-setup
+
+[skills/taruvi-setup/SKILL.md](skills/taruvi-setup/SKILL.md) — "setup taruvi":
+confirm the MCP connection and write the app's `.env`.
+
 ### taruvi-app-developer
 
-Use [src/skills/taruvi-app-developer/SKILL.md](src/skills/taruvi-app-developer/SKILL.md)
-for Taruvi backend work: datatables, Cerbos policies, roles, users, buckets,
-secrets, analytics queries, audited raw SQL, and Python function bodies that run
-in the Taruvi function runtime.
+Use [skills/taruvi-app-developer/SKILL.md](skills/taruvi-app-developer/SKILL.md)
+for TaruviBase backend work: datatables, access policies, roles, users, buckets,
+secrets, analytics queries, and Python function bodies that run in the
+TaruviBase function runtime.
 
 Key references:
 
-- [architecture-overview.md](src/skills/taruvi-app-developer/references/architecture-overview.md)
-- [mcp-tool-quickref.md](src/skills/taruvi-app-developer/references/mcp-tool-quickref.md)
-- [datatable-schema-patterns.md](src/skills/taruvi-app-developer/references/datatable-schema-patterns.md)
-- [cerbos-policy-cookbook.md](src/skills/taruvi-app-developer/references/cerbos-policy-cookbook.md)
-- [function-authoring.md](src/skills/taruvi-app-developer/references/function-authoring.md)
-- [function-sdk-reference.md](src/skills/taruvi-app-developer/references/function-sdk-reference.md)
-- [feature-workflow-examples.md](src/skills/taruvi-app-developer/references/feature-workflow-examples.md)
+- [architecture-overview.md](skills/taruvi-app-developer/references/architecture-overview.md)
+- [mcp-tool-quickref.md](skills/taruvi-app-developer/references/mcp-tool-quickref.md)
+- [datatable-schema-patterns.md](skills/taruvi-app-developer/references/datatable-schema-patterns.md)
+- [cerbos-policy-cookbook.md](skills/taruvi-app-developer/references/cerbos-policy-cookbook.md)
+- [function-authoring.md](skills/taruvi-app-developer/references/function-authoring.md)
+- [function-sdk-reference.md](skills/taruvi-app-developer/references/function-sdk-reference.md)
+- [feature-workflow-examples.md](skills/taruvi-app-developer/references/feature-workflow-examples.md)
 
 ### taruvi-refine-providers
 
-Use [src/skills/taruvi-refine-providers/SKILL.md](src/skills/taruvi-refine-providers/SKILL.md)
-for Refine.dev frontend work in Taruvi apps: data, storage, app, user, auth,
+Use [skills/taruvi-refine-providers/SKILL.md](skills/taruvi-refine-providers/SKILL.md)
+for Refine.dev frontend work in TaruviBase apps: data, storage, app, user, auth,
 and access control providers; Refine hooks; list pages; dashboards; uploads;
-permission-aware UI; and frontend calls to Taruvi functions or analytics.
+permission-aware UI; and frontend calls to TaruviBase functions or analytics.
 
 Key references:
 
-- [overview.md](src/skills/taruvi-refine-providers/references/overview.md)
-- [database-provider.md](src/skills/taruvi-refine-providers/references/database-provider.md)
-- [storage-provider.md](src/skills/taruvi-refine-providers/references/storage-provider.md)
-- [app-provider.md](src/skills/taruvi-refine-providers/references/app-provider.md)
-- [user-provider.md](src/skills/taruvi-refine-providers/references/user-provider.md)
-- [auth-provider.md](src/skills/taruvi-refine-providers/references/auth-provider.md)
-- [access-control-provider.md](src/skills/taruvi-refine-providers/references/access-control-provider.md)
-- [types-and-utilities.md](src/skills/taruvi-refine-providers/references/types-and-utilities.md)
-
-## Vendor Support
-
-- [src/vendors/claude/README.md](src/vendors/claude/README.md) - Claude support files.
-- [src/vendors/codex/README.md](src/vendors/codex/README.md) - Codex support files.
-- [src/vendors/cursor/README.md](src/vendors/cursor/README.md) - Cursor support files and MCP template.
-- [src/vendors/kiro/README.md](src/vendors/kiro/README.md) - Kiro support files.
-- [src/vendors/kiro/INSTRUCTIONS.md](src/vendors/kiro/INSTRUCTIONS.md) - Kiro project instructions.
+- [overview.md](skills/taruvi-refine-providers/references/overview.md)
+- [database-provider.md](skills/taruvi-refine-providers/references/database-provider.md)
+- [storage-provider.md](skills/taruvi-refine-providers/references/storage-provider.md)
+- [app-provider.md](skills/taruvi-refine-providers/references/app-provider.md)
+- [user-provider.md](skills/taruvi-refine-providers/references/user-provider.md)
+- [auth-provider.md](skills/taruvi-refine-providers/references/auth-provider.md)
+- [access-control-provider.md](skills/taruvi-refine-providers/references/access-control-provider.md)
+- [types-and-utilities.md](skills/taruvi-refine-providers/references/types-and-utilities.md)
 
 ## Development
-
-Build generated vendor payload files:
-
-```bash
-npm run build:vendor-files
-```
-
-Run the local installer test:
-
-```bash
-node bin/taruvi-agents-plugin.js install --target /tmp/taruvi-agents-plugin-test --force --allow-non-template
-```
-
-Run the package test script:
 
 ```bash
 npm test
