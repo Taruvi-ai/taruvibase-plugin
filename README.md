@@ -7,7 +7,7 @@ CLI, Kiro, and other AI coding agents. It gives your agent:
   tables, records, functions, policies, storage, secrets, and queries
 - `taruvi-app-developer` for backend work
 - `taruvi-refine-providers` for Refine frontend work
-- `taruvi-setup` to connect a project and write its `.env`
+- `taruvi-setup` to point a project at one of your TaruviBase apps (writes its `.env`)
 
 ## Getting started
 
@@ -24,14 +24,23 @@ may use. There is no API key to paste into MCP config.
 | Gemini CLI | `gemini extensions install https://github.com/Taruvi-ai/taruvibase-plugin` |
 | Kiro | Powers → **Add Custom Power** → **Import power from GitHub** → repository URL |
 
-Then ask your agent:
+You can start working right away, for example "create a `notes` table with a
+title and body". The agent manages your backend through the MCP server; no setup
+step is needed for that.
+
+When your own app code needs to talk to TaruviBase, open the project folder and
+ask your agent:
 
 ```text
 setup taruvi
 ```
 
-It confirms the MCP connection and writes your app's `.env` from the values on the
-app's **Settings → Connect** page in TaruviBase Console.
+It lists the sites and apps you approved when signing in, asks which one if
+there's more than one, and writes the site URL and app slug into the project's
+`.env` (using the project's conventions, such as `VITE_` or `NEXT_PUBLIC_`
+prefixes). It asks for an API key only if the project has server-side code that
+needs one; you generate that on the app's **Settings → Connect** page in
+TaruviBase Console.
 
 Starting a new web app? You can clone the
 [TaruviBase Refine starter template](https://github.com/Taruvi-ai/refine-starter-template)
