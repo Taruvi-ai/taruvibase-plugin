@@ -88,6 +88,14 @@ Console -> org -> site -> app -> **Settings -> Connect**, click
 they skipped **Generate API Key**. Never echo a full API key; mask it as
 `...abcd`.
 
+Taruvi functions don't count as server-side code here, even when their source
+lives in the repo (for example a `functions/` folder). They run inside Taruvi
+with an authenticated `sdk_client`, and the agent deploys them through the MCP
+connection. Third-party credentials they use belong in Taruvi secrets, not
+`.env`. Calling a function from the frontend, an event, a schedule, or a public
+webhook doesn't need an API key either; only the project's own backend,
+scripts, or CI calling Taruvi without a signed-in user does.
+
 ## 3. Write `.env`
 
 Write or update `.env` with:
