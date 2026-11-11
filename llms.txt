@@ -19,7 +19,8 @@ read [AGENTS.md](AGENTS.md).
 ### taruvi-setup
 
 [skills/taruvi-setup/SKILL.md](skills/taruvi-setup/SKILL.md) — "setup taruvi":
-confirm the MCP connection and write the app's `.env`.
+pick a site and app from the MCP connection and write their URL and slug into
+the project's `.env`.
 
 ### taruvi-app-developer
 
