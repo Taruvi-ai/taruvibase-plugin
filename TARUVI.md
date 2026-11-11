@@ -8,7 +8,8 @@ sites and apps the agent may use.
 ## Which skill to use
 
 - `taruvi-setup` — "setup taruvi" or starting a new app: optionally suggest the starter
-  template, confirm the MCP connection, and write the app's `.env`.
+  template, confirm the MCP connection, and write the app's `.env` from the
+  site and app the MCP connection covers.
 - `taruvi-app-developer` — backend work: datatables, access policies, roles, users,
   storage, secrets, analytics queries, and Python function bodies.
 - `taruvi-refine-providers` — Refine frontend work with `@taruvi/refine-providers`.
