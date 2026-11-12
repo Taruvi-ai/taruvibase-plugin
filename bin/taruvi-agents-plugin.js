@@ -1,304 +1,196 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const packageRoot = path.resolve(__dirname, "..");
-const payloadRoot = path.join(packageRoot, "payload");
+const packageRoot = fileURLToPath(new URL('../', import.meta.url));
+const payloadRoot = path.join(packageRoot, 'payload');
+const vendors = ['.agents', '.claude', '.codex', '.cursor', '.kiro'];
+const runtimePaths = new Set(['.claude/.mcp.json', '.codex/.mcp.json', '.cursor/mcp.json', '.kiro/mcp.json']);
+const ignores = ['.env', '.env.local', '.mcp.json', '.claude/.mcp.json', '.codex/.mcp.json', '.codex/config.toml', '.codex/log/', '.cursor/mcp.json', '.kiro/settings/mcp.json', '.kiro/.taruvi-mcp-confirmed', '.taruvi-agents-plugin/'];
+const stateDir = '.taruvi-agents-plugin';
+const hash = data => crypto.createHash('sha256').update(data).digest('hex');
+const stat = p => { try { return fs.lstatSync(p); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
 
-const RUNTIME_IGNORES = [
-  ".env",
-  ".env.local",
-  ".mcp.json",
-  ".claude/.mcp.json",
-  ".codex/.mcp.json",
-  ".codex/log/",
-  ".kiro/settings/mcp.json",
-];
-
-const SHARED_SKILLS = [
-  "taruvi-app-developer",
-  "taruvi-refine-providers",
-];
-
-const OBSOLETE_INSTALLED_PATHS = [
-  ".kiro/hooks/refine-v5-review.json",
-  ".kiro/hooks/refine-v5-review.kiro.hook",
-];
-
-function usage(exitCode = 0) {
-  const out = exitCode === 0 ? console.log : console.error;
-  out(`Usage:
-  taruvi-agents-plugin install [--target <dir>] [--force] [--allow-non-template]
-
-Installs Claude, Codex, Cursor, and Kiro agent support into a Taruvi template.
-`);
-  process.exit(exitCode);
+function usage() {
+  console.log('Usage: taruvi-agents-plugin install [--target <dir>] [--force] [--allow-non-template]\nExisting MCP configuration is always preserved. --force backs up and replaces modified support files.');
 }
-
-function parseArgs(argv) {
-  const args = {
-    command: argv[2],
-    target: process.cwd(),
-    force: false,
-    allowNonTemplate: false,
-  };
-
-  for (let index = 3; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === "--target") {
-      const value = argv[index + 1];
-      if (!value) usage(1);
-      args.target = path.resolve(value);
-      index += 1;
-    } else if (arg === "--force") {
-      args.force = true;
-    } else if (arg === "--allow-non-template") {
-      args.allowNonTemplate = true;
-    } else if (arg === "--help" || arg === "-h") {
-      usage(0);
-    } else {
-      console.error(`Unknown argument: ${arg}`);
-      usage(1);
-    }
+function parseArgs() {
+  const args = { target: process.cwd(), force: false, allowNonTemplate: false };
+  const argv = process.argv.slice(2);
+  if (!argv.length || ['--help', '-h'].includes(argv[0])) { usage(); return null; }
+  if (argv.shift() !== 'install') throw new Error('Expected install command');
+  while (argv.length) {
+    const option = argv.shift();
+    if (option === '--target') {
+      if (!argv.length || argv[0].startsWith('--')) throw new Error('--target requires a directory');
+      args.target = path.resolve(argv.shift());
+    } else if (option === '--force') args.force = true;
+    else if (option === '--allow-non-template') args.allowNonTemplate = true;
+    else if (['--help', '-h'].includes(option)) { usage(); return null; }
+    else throw new Error(`Unknown argument: ${option}`);
   }
-
   return args;
 }
-
-function pathExists(target) {
-  return fs.existsSync(target);
-}
-
-function ensurePayload() {
-  if (pathExists(path.join(payloadRoot, ".agents", "skills"))) {
-    return;
-  }
-
-  const script = path.join(packageRoot, "scripts", "build-vendor-files.sh");
-  if (!pathExists(script)) {
-    throw new Error("Installer payload is missing and build script is unavailable.");
-  }
-
-  const result = spawnSync("bash", [script], {
-    cwd: packageRoot,
-    stdio: "inherit",
-  });
-
-  if (result.status !== 0) {
-    throw new Error("Failed to build installer payload.");
+function assertSafeAncestors(root, relative) {
+  let current = root;
+  for (const part of relative.split(path.sep)) {
+    current = path.join(current, part);
+    if (stat(current)?.isSymbolicLink()) throw new Error(`Refusing destination symlink: ${path.relative(root, current)}`);
   }
 }
-
-function verifyTemplate(target, allowNonTemplate) {
-  const markers = [
-    "package.json",
-    "src/taruviClient.ts",
-    "AGENTS.md",
-    "UI_Guidelines.md",
-  ];
-
-  const missing = markers.filter((marker) => !pathExists(path.join(target, marker)));
-  if (missing.length === 0 || allowNonTemplate) {
-    return;
-  }
-
-  throw new Error(
-    `Target does not look like a Taruvi Refine template. Missing: ${missing.join(", ")}\n` +
-      "Use --allow-non-template to install anyway."
-  );
+function legacyTarget(relative) {
+  const match = relative.match(/^\.(claude|codex|cursor|kiro)\/skills\/(taruvi-app-developer|taruvi-refine-providers|context7-mcp)$/);
+  if (match) return match[2] === 'context7-mcp' ? '../../.codex/skills/context7-mcp' : `../../.agents/skills/${match[2]}`;
+  if (relative === '.kiro/scripts') return '../.agents/hooks/taruvi';
+  return null;
 }
-
-function clearConflictingDestination(destination, sourceIsDirectory) {
-  let stats;
-  try {
-    stats = fs.lstatSync(destination);
-  } catch (error) {
-    if (error.code === "ENOENT") {
+// Snapshot before updating .codex: the legacy Kiro directory shares its contents.
+// Resolve contained support links into real files, rejecting escapes and cycles.
+function snapshotSkills(root, directory) {
+  const entries = new Map();
+  function walk(source, relative, ancestors = new Set()) {
+    let resolved;
+    try { resolved = fs.realpathSync(source); }
+    catch { throw new Error(`Cannot migrate legacy Kiro skills: missing or broken link at ${relative || '.'}`); }
+    const within = path.relative(root, resolved);
+    if (within === '..' || within.startsWith(`..${path.sep}`) || path.isAbsolute(within)) {
+      throw new Error(`Cannot migrate legacy Kiro skills: link escapes project at ${relative || '.'}`);
+    }
+    const info = fs.statSync(resolved);
+    if (info.isDirectory()) {
+      if (ancestors.has(resolved)) throw new Error(`Cannot migrate legacy Kiro skills: link cycle at ${relative}`);
+      entries.set(relative, { directory: true, mode: info.mode & 0o777 });
+      const next = new Set(ancestors).add(resolved);
+      for (const name of fs.readdirSync(resolved)) walk(path.join(resolved, name), path.join(relative, name), next);
+    } else if (info.isFile()) {
+      entries.set(relative, { directory: false, mode: info.mode & 0o777, content: fs.readFileSync(resolved) });
+    } else throw new Error(`Cannot migrate legacy Kiro skills: unsupported file at ${relative}`);
+  }
+  walk(directory, '');
+  if (!entries.get('').directory) throw new Error('Legacy Kiro skills must point to a directory');
+  return entries;
+}
+function install(args) {
+  let root = path.resolve(args.target);
+  if (stat(root)?.isSymbolicLink()) throw new Error('Target must not be a symlink');
+  // Canonicalize OS aliases such as macOS /tmp -> /private/tmp. Plugin-owned
+  // destination paths below this root are still checked independently.
+  let ancestor = root;
+  while (!stat(ancestor)) ancestor = path.dirname(ancestor);
+  root = path.join(fs.realpathSync(ancestor), path.relative(ancestor, root));
+  const missing = ['package.json', 'src/taruviClient.ts', 'AGENTS.md', 'UI_Guidelines.md'].filter(p => !fs.existsSync(path.join(root, p)));
+  if (missing.length && !args.allowNonTemplate) throw new Error(`Target is not a Taruvi template. Missing: ${missing.join(', ')}. Use --allow-non-template explicitly.`);
+  if (!fs.existsSync(payloadRoot)) throw new Error('Installer payload is missing. Rebuild the package before installing.');
+  for (const file of ['.kiro/settings/mcp.json', '.codex/config.toml', '.codex/log/codex-tui.log']) {
+    if (fs.existsSync(path.join(payloadRoot, file))) throw new Error(`Runtime file in payload: ${file}`);
+  }
+  assertSafeAncestors(root, stateDir);
+  assertSafeAncestors(root, '.gitignore');
+  assertSafeAncestors(root, `${stateDir}/state.json`);
+  const stateFile = path.join(root, stateDir, 'state.json');
+  const previous = stat(stateFile) ? JSON.parse(fs.readFileSync(stateFile, 'utf8')) : { files: {} };
+  if (!previous.files || typeof previous.files !== 'object' || Array.isArray(previous.files)) throw new Error('Invalid installer state');
+  const planned = [], links = [], conflicts = [], preserved = [];
+  const files = {};
+  const kiroSkills = path.join('.kiro', 'skills');
+  const kiroPath = path.join(root, kiroSkills);
+  assertSafeAncestors(root, '.kiro');
+  const migration = stat(kiroPath)?.isSymbolicLink() && fs.readlinkSync(kiroPath) === '../.codex/skills'
+    ? snapshotSkills(root, kiroPath) : null;
+  const inMigration = relative => migration && (relative === kiroSkills || relative.startsWith(kiroSkills + path.sep));
+  function visit(relative, replacingLink = false) {
+    const source = path.join(payloadRoot, relative), destination = path.join(root, relative);
+    const sourceStat = fs.lstatSync(source);
+    if (sourceStat.isSymbolicLink()) throw new Error(`Payload must be self-contained without symlinks: ${relative}`);
+    const inherited = inMigration(relative) ? migration.get(path.relative(kiroSkills, relative)) : null;
+    let existing = inMigration(relative)
+      ? (inherited ? { isSymbolicLink: () => false, isDirectory: () => inherited.directory, isFile: () => !inherited.directory } : null)
+      : replacingLink ? null : stat(destination);
+    if (existing?.isSymbolicLink()) {
+      // Migrate only the exact links emitted by older installer releases.
+      if (sourceStat.isDirectory() && fs.readlinkSync(destination) === legacyTarget(relative)) {
+        links.push(relative); existing = null; replacingLink = true;
+      } else throw new Error(`Refusing destination symlink: ${relative}`);
+    }
+    if (sourceStat.isDirectory()) {
+      if (existing && !existing.isDirectory()) throw new Error(`Expected directory: ${relative}`);
+      for (const name of fs.readdirSync(source)) visit(path.join(relative, name), replacingLink);
       return;
     }
-    throw error;
+    if (existing && !existing.isFile()) throw new Error(`Expected regular file: ${relative}`);
+    if (existing && runtimePaths.has(relative)) { preserved.push(relative); return; }
+    const content = fs.readFileSync(source), digest = hash(content);
+    if (!runtimePaths.has(relative)) files[relative] = digest;
+    const existingHash = existing ? hash(inherited ? inherited.content : fs.readFileSync(destination)) : null;
+    if (existingHash === digest) return;
+    const modified = existing && existingHash !== previous.files[relative];
+    if (modified && !args.force) conflicts.push(relative);
+    planned.push({ relative, content, mode: sourceStat.mode & 0o777, backup: Boolean(modified), backupContent: modified && inherited ? inherited.content : null });
   }
+  for (const vendor of vendors) visit(vendor);
+  if (conflicts.length) throw new Error(`Modified or unmanaged files would be overwritten:\n${conflicts.join('\n')}\nReview them, then use --force to back them up and replace them. MCP configuration is always preserved.`);
 
-  // A symlink or file where we need a real directory (or vice versa) makes
-  // fs.cpSync throw EISDIR/ENOTDIR. Stale symlinks from earlier installs are
-  // the common case, so replace the destination instead of failing.
-  const destinationIsDirectory = stats.isDirectory() && !stats.isSymbolicLink();
-  if (sourceIsDirectory !== destinationIsDirectory) {
-    fs.rmSync(destination, { recursive: true, force: true });
-  }
-}
-
-function copyDirectoryContents(source, destination) {
-  if (!pathExists(source)) {
-    return;
-  }
-
-  clearConflictingDestination(destination, true);
-  fs.mkdirSync(destination, { recursive: true });
-  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
-    const from = path.join(source, entry.name);
-    const to = path.join(destination, entry.name);
-
-    if (entry.isDirectory()) {
-      copyDirectoryContents(from, to);
-      continue;
+  // All destination conflicts have been checked before any writes.
+  fs.mkdirSync(root, { recursive: true });
+  fs.mkdirSync(path.join(root, stateDir), { recursive: true, mode: 0o700 });
+  const existingIgnore = stat(path.join(root, '.gitignore')) ? fs.readFileSync(path.join(root, '.gitignore'), 'utf8') : '';
+  const present = new Set(existingIgnore.split(/\r?\n/).map(s => s.trim()));
+  const additions = ignores.filter(s => !present.has(s));
+  if (additions.length) fs.writeFileSync(path.join(root, '.gitignore'), existingIgnore + (existingIgnore && !existingIgnore.endsWith('\n') ? '\n' : '') + '\n# Taruvi local configuration and installer backups\n' + additions.join('\n') + '\n');
+  let backupDir;
+  if (planned.some(p => p.backup)) {
+    backupDir = fs.mkdtempSync(path.join(root, stateDir, 'backup-'));
+    fs.chmodSync(backupDir, 0o700);
+    for (const item of planned.filter(p => p.backup)) {
+      const target = path.join(backupDir, item.relative);
+      fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+      if (item.backupContent) fs.writeFileSync(target, item.backupContent);
+      else fs.copyFileSync(path.join(root, item.relative), target);
+      fs.chmodSync(target, 0o600);
     }
-
-    clearConflictingDestination(to, false);
-    fs.cpSync(from, to, {
-      recursive: true,
-      force: true,
-      dereference: false,
-      verbatimSymlinks: true,
-    });
   }
-}
-
-function removePath(target) {
-  fs.rmSync(target, { recursive: true, force: true });
-}
-
-function ensureSymlink(targetRoot, linkPath, relativeTarget) {
-  const absoluteLink = path.join(targetRoot, linkPath);
-  const parent = path.dirname(absoluteLink);
-  fs.mkdirSync(parent, { recursive: true });
-
-  try {
-    fs.lstatSync(absoluteLink);
-    removePath(absoluteLink);
-  } catch (error) {
-    if (error.code !== "ENOENT") {
+  // Build a complete replacement before removing the old directory link.
+  let stagedSkills;
+  if (migration) {
+    stagedSkills = fs.mkdtempSync(path.join(root, stateDir, 'kiro-skills-'));
+    for (const [relative, entry] of migration) {
+      const target = path.join(stagedSkills, relative);
+      if (entry.directory) fs.mkdirSync(target, { recursive: true });
+      else fs.writeFileSync(target, entry.content, { mode: entry.mode });
+    }
+    for (const item of planned.filter(item => inMigration(item.relative))) {
+      const target = path.join(stagedSkills, path.relative(kiroSkills, item.relative));
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, item.content, { mode: item.mode });
+    }
+  }
+  for (const relative of links) fs.unlinkSync(path.join(root, relative));
+  for (const item of planned) {
+    if (inMigration(item.relative)) continue;
+    const target = path.join(root, item.relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const temp = `${target}.taruvi-${crypto.randomUUID()}`;
+    fs.writeFileSync(temp, item.content, { mode: item.mode, flag: 'wx' });
+    fs.renameSync(temp, target);
+  }
+  if (migration) {
+    fs.unlinkSync(kiroPath);
+    try { fs.renameSync(stagedSkills, kiroPath); }
+    catch (error) {
+      fs.symlinkSync('../.codex/skills', kiroPath);
       throw error;
     }
+    console.log('Migrated .kiro/skills to a real directory, preserving existing skills.');
   }
-
-  fs.symlinkSync(relativeTarget, absoluteLink, "dir");
+  const tempState = `${stateFile}.${crypto.randomUUID()}`;
+  fs.writeFileSync(tempState, JSON.stringify({ version: 1, files }, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+  fs.renameSync(tempState, stateFile);
+  console.log(`Taruvi agent support installed in ${root}.`);
+  if (preserved.length) console.log(`Preserved existing MCP configuration: ${preserved.join(', ')}`);
+  if (backupDir) console.log(`Backups: ${backupDir}`);
+  console.log('Next: open your agent and say: setup taruvi. See the vendor README for plugin activation.');
 }
-
-function installPayload(targetRoot) {
-  copyDirectoryContents(path.join(payloadRoot, ".agents"), path.join(targetRoot, ".agents"));
-  copyDirectoryContents(path.join(payloadRoot, ".claude"), path.join(targetRoot, ".claude"));
-  copyDirectoryContents(path.join(payloadRoot, ".codex"), path.join(targetRoot, ".codex"));
-  copyDirectoryContents(path.join(payloadRoot, ".cursor"), path.join(targetRoot, ".cursor"));
-  copyDirectoryContents(path.join(payloadRoot, ".kiro"), path.join(targetRoot, ".kiro"));
-}
-
-function removeObsoleteInstalledPaths(targetRoot) {
-  for (const relativePath of OBSOLETE_INSTALLED_PATHS) {
-    removePath(path.join(targetRoot, relativePath));
-  }
-}
-
-function installSharedSkillSymlinks(targetRoot) {
-  for (const vendor of [".claude", ".codex", ".cursor", ".kiro"]) {
-    for (const skill of SHARED_SKILLS) {
-      ensureSymlink(
-        targetRoot,
-        path.join(vendor, "skills", skill),
-        "../../.agents/skills/" + skill
-      );
-    }
-  }
-
-  const context7Source = path.join(targetRoot, ".codex", "skills", "context7-mcp");
-  if (pathExists(context7Source)) {
-    for (const vendor of [".claude", ".cursor", ".kiro"]) {
-      ensureSymlink(
-        targetRoot,
-        path.join(vendor, "skills", "context7-mcp"),
-        "../../.codex/skills/context7-mcp"
-      );
-    }
-  }
-}
-
-function installSharedHookSymlinks(targetRoot) {
-  const sharedTaruviHooks = path.join(targetRoot, ".agents", "hooks", "taruvi");
-  if (!pathExists(sharedTaruviHooks)) {
-    return;
-  }
-
-  ensureSymlink(
-    targetRoot,
-    path.join(".kiro", "scripts"),
-    "../.agents/hooks/taruvi"
-  );
-}
-
-function updateGitignore(targetRoot) {
-  const gitignorePath = path.join(targetRoot, ".gitignore");
-  const existing = pathExists(gitignorePath)
-    ? fs.readFileSync(gitignorePath, "utf8")
-    : "";
-
-  const lines = existing.split(/\r?\n/);
-  const present = new Set(lines.map((line) => line.trim()).filter(Boolean));
-  const missing = RUNTIME_IGNORES.filter((entry) => !present.has(entry));
-
-  if (missing.length === 0) {
-    return false;
-  }
-
-  const prefix = existing.endsWith("\n") || existing.length === 0 ? "" : "\n";
-  const block = [
-    "",
-    "# Taruvi agent local runtime state",
-    ...missing,
-    "",
-  ].join("\n");
-
-  fs.writeFileSync(gitignorePath, existing + prefix + block);
-  return true;
-}
-
-function assertNoForbiddenPayload() {
-  const forbidden = [
-    ".kiro/settings/mcp.json",
-    ".codex/log/codex-tui.log",
-    ".codex/.personality_migration",
-    ".codex/config.toml",
-  ];
-
-  for (const rel of forbidden) {
-    if (pathExists(path.join(payloadRoot, rel))) {
-      throw new Error(`Forbidden runtime file present in payload: ${rel}`);
-    }
-  }
-}
-
-function install(args) {
-  const targetRoot = path.resolve(args.target);
-  ensurePayload();
-  assertNoForbiddenPayload();
-  verifyTemplate(targetRoot, args.allowNonTemplate);
-
-  fs.mkdirSync(targetRoot, { recursive: true });
-  installPayload(targetRoot);
-  removeObsoleteInstalledPaths(targetRoot);
-  installSharedSkillSymlinks(targetRoot);
-  installSharedHookSymlinks(targetRoot);
-  const gitignoreUpdated = updateGitignore(targetRoot);
-
-  console.log("Taruvi agent support installed.");
-  console.log("");
-  console.log(`Target: ${targetRoot}`);
-  console.log("Installed: .agents, .claude, .codex, .cursor, .kiro");
-  console.log(gitignoreUpdated ? "Updated: .gitignore" : "Updated: .gitignore already had required entries");
-  console.log("");
-  console.log("Next: open your preferred agent and say: setup taruvi");
-}
-
-const args = parseArgs(process.argv);
-
-try {
-  if (args.command !== "install") {
-    usage(args.command ? 1 : 0);
-  }
-  install(args);
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-}
+try { const args = parseArgs(); if (args) install(args); }
+catch (e) { console.error(e.message); process.exitCode = 1; }

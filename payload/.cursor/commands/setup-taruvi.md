@@ -1,22 +1,13 @@
 ---
-name: setup-taruvi
-description: Start interactive Taruvi MCP setup (tenant, API key, app slug)
+name: taruvi-setup
+description: Configure Taruvi OAuth MCP and separate application runtime settings in Cursor.
 ---
 
-# /setup-taruvi
+# Set up Taruvi
 
-Run the **Taruvi setup** interview for this Cursor plugin.
-
-Follow the same rules as the `taruvi-setup` agent:
-
-1. Point the user at their app **Connect** page, built from their own org / site / app:  
-   `https://<console-host>/organizations/<org-slug>/sites/<site-slug>/apps/<app-slug>/settings?section=connect`  
-   Don't guess slugs to make it clickable — give the pattern, or Console → org → site → app → **Settings → Connect**.
-2. Ask for **all three values in one message**: tell them to click **Generate API Key**, then copy
-   the **Environment** tab block (`TARUVI_SITE_URL`, `TARUVI_APP_SLUG`, `TARUVI_API_KEY`) and paste
-   all three lines back. Optional Context7 key, or `skip`.
-3. Do **not** write secrets into `mcp.json` or the repo.
-4. After the paste, tell the user to enter the values in **Customize -> Plugins -> taruvi-plugin -> Configure** (`TARUVI_TENANT` is the subdomain of `TARUVI_SITE_URL`).
-5. Wait for them to confirm, then verify with a simple Taruvi MCP call (e.g. list datatables).
-
-Begin now with a short intro and that single ask.
+Load the `cursor-setup` skill and follow its shared setup and Cursor instructions.
+Ask the user to paste the MCP URL or client configuration from Console → org →
+site → app → Settings → Connect → MCP Server, with **This app** selected.
+Extract environment/site/app from the URL; do not ask for slugs separately.
+Configure that URL, authenticate using Cursor's MCP controls, and verify live scope.
+Do not request a Taruvi API key for MCP. Runtime `.env` keys are separate.

@@ -5,5 +5,8 @@
       "-y",
       "@upstash/context7-mcp"
     ]
+  },
+  "taruvi": {
+    "url": "https://mcp.taruvibase.com/mcp"
   }
 }

@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "taruvi": {
+      "url": "https://mcp.taruvibase.com/mcp",
+      "type": "http",
+      "disabled": false,
+      "autoApprove": []
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

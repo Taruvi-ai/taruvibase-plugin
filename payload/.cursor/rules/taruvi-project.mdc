@@ -12,6 +12,6 @@ Use the bundled Taruvi skills before implementing:
 - `taruvi-refine-providers` for React, Refine, `@taruvi/refine-providers`, CRUD pages, dashboards, auth, access control, file upload, and frontend calls to Taruvi functions or analytics.
 - `cursor-setup` when the user asks to connect MCP, fix missing Taruvi tools, or configure `TARUVI_*` values.
 
-Keep Cursor plugin secrets out of the repository. The plugin declares `TARUVI_TENANT`, `TARUVI_API_KEY`, `TARUVI_APP_SLUG`, and optional `CONTEXT7_API_KEY` in `.cursor-plugin/plugin.json`; values are entered through Cursor plugin configuration and substituted into `mcp.json`.
-
-For Taruvi MCP, use the tenant endpoint `https://<tenant>.taruvi.cloud/mcp/` and pass app context through the `X-App-Slug` header. Do not use `/api/apps/<app-slug>/mcp/`.
+Use the `cursor-setup` skill for OAuth setup. Taruvi MCP uses the central Worker
+URL, narrowed with `siteId` and `appId`. The client manages credentials; do not add
+API-key or X-App-Slug headers. Runtime `.env` credentials remain separate.

@@ -1,5 +1,9 @@
 # Datatable schema patterns (Frictionless + Taruvi extensions)
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 The full shape of the `datapackage` argument to `create_update_schema`. Taruvi follows [Frictionless Data Package](https://specs.frictionlessdata.io/data-package/) plus Taruvi-specific extensions.
 
 Source of truth: <https://test-docs.taruvi.cloud/docs/data-service/> — `guides/migrations`, `/hierarchy`, `/graph-traversal`, `/relationships`, `/imports`.

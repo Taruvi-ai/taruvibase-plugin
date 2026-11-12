@@ -1,5 +1,9 @@
 # Feature workflow examples
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 Three worked examples showing the full cross-layer workflow. Use these as templates.
 
 ## Example 1: Add a comments feature to a blog app

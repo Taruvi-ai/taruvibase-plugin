@@ -1,33 +1,25 @@
-# Taruvi Plugin — Cursor
+# Taruvi for Cursor
 
-Plugin root for Cursor. See the [repo README](../README.md) for multi-host overview.
+This generated directory is a self-contained Cursor plugin, identified by
+`.cursor-plugin/plugin.json`. It includes skills, rules, an agent, commands,
+and the native `mcp.json` template.
 
-```bash
-cp -a /path/to/taruvi-plugin/cursor ~/.cursor/plugins/local/taruvi-plugin
-```
+Distribute this directory as the plugin root through Cursor's documented plugin
+or team-marketplace workflow. The npm installer also copies these files to a
+workspace's `.cursor` directory; workspace discovery is not plugin activation,
+and plugin variables require a configured plugin installation.
 
-Then **Developer: Reload Window**.
+Ask `setup taruvi` and follow the bundled setup skill. Taruvi uses browser OAuth
+at `https://mcp.taruvibase.com/mcp`; no Taruvi API-key fields are required.
+In Console, open org → site → app → Settings → Connect → MCP Server. Select
+**This app** and paste the URL or client configuration into the agent. It extracts
+the environment, site and app automatically; you do not need to find a slug. Reconnect, sign in using the client's MCP controls, and verify
+`get_sites` and `get_apps` against the intended Console site and app.
+Runtime API keys remain in the app's ignored `.env`, separate from MCP OAuth.
+The installer preserves existing local MCP settings even with `--force`: migrate
+the Taruvi entry explicitly and remove its legacy auth and app headers.
+Context7 configuration is independent. Live login and refresh need client testing.
 
-## Configure MCP (interactive)
-
-1. Run the **taruvi-setup** agent, or the `/setup-taruvi` command, or ask “setup taruvi” (loads **cursor-setup** skill).
-2. It asks once: generate an API key on the app’s **Connect** page, then paste the whole
-   `TARUVI_SITE_URL` / `TARUVI_APP_SLUG` / `TARUVI_API_KEY` block back (plus optional Context7).
-3. Paste values into **Customize → Plugins → taruvi-plugin → Configure** (do not commit secrets into `mcp.json`).
-4. Reload if needed; approve MCP servers; verify with “List the datatables in this app.”
-
-The plugin `mcp.json` includes the Taruvi HTTP server template. Cursor resolves
-`TARUVI_TENANT`, `TARUVI_API_KEY`, and `TARUVI_APP_SLUG` from plugin variables, then connects to
-`https://<tenant>.taruvi.cloud/mcp/` with `Authorization` and `X-App-Slug` headers. If the config
-was changed while a session/window was already open, reload before checking whether Taruvi tools
-exist.
-
-## What's Cursor-specific
-
-| Piece | Notes |
-|---|---|
-| `.cursor-plugin/plugin.json` | Cursor plugin manifest. Declares variables for user-specified secrets and explicitly points to skills, rules, agents, commands, and MCP config. |
-| `mcp.json` | Placeholder-only MCP template. Cursor substitutes `${VAR}` values from plugin Configure. |
-| `rules/` | Cursor `.mdc` project rules. These complement the shared Agent Skills with lightweight routing guidance. |
-| `commands/` | Markdown slash commands such as `/setup-taruvi`. |
-| `agents/` | Cursor-specific setup agent instructions. |
+References: [plugin formats, variables, and distribution](https://cursor.com/docs/reference/plugins).
+Test the installed package and optional-variable behavior in the intended Cursor
+version before release; repository checks validate files, not the running client.

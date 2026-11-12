@@ -1,29 +1,12 @@
 {
   "name": "taruvi-plugin",
   "description": "Taruvi skills + MCP for building Taruvi apps in Claude Code",
-  "version": "1.0.0",
-  "author": { "name": "R. Surya Prakash" },
+  "version": "0.1.0",
+  "author": {
+    "name": "R. Surya Prakash"
+  },
   "mcpServers": "./.mcp.json",
   "userConfig": {
-    "taruvi_tenant": {
-      "type": "string",
-      "title": "Taruvi tenant",
-      "description": "Tenant subdomain (e.g. acme for https://acme.taruvi.cloud/mcp/)",
-      "required": true
-    },
-    "taruvi_api_key": {
-      "type": "string",
-      "title": "Taruvi API key",
-      "description": "Knox API key (Authorization: Api-Key …)",
-      "sensitive": true,
-      "required": true
-    },
-    "taruvi_app_slug": {
-      "type": "string",
-      "title": "Taruvi app slug",
-      "description": "App slug sent as X-App-Slug",
-      "required": true
-    },
     "context7_api_key": {
       "type": "string",
       "title": "Context7 API key",

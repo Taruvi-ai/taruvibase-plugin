@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "taruvi-agents-plugin",
+  "version": "0.1.0",
+  "description": "Portable Taruvi skills for building Taruvi apps with agent clients.",
+  "author": {
+    "name": "Taruvi"
+  },
+  "license": "MIT",
+  "keywords": [
+    "taruvi",
+    "agents",
+    "skills",
+    "refine",
+    "mcp"
+  ]
+}

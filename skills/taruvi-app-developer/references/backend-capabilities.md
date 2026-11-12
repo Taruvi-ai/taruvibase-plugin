@@ -1,5 +1,9 @@
 # Backend query capabilities
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 What the Taruvi data service supports for datatables, storage, and users. Source of truth: <https://test-docs.taruvi.cloud/docs/data-service/guides/querying> (and `aggregations`, `graph-traversal` siblings). Reflects May 2026 surface.
 
 REST URL convention: `?field__operator=value` (double-underscore separates path segments and operator). Field paths can traverse relations with `.` (see below).

@@ -2,7 +2,9 @@
   "name": "taruvi-plugin",
   "description": "Taruvi skills + MCP for building Taruvi apps in Cursor",
   "version": "1.0.0",
-  "author": { "name": "R. Surya Prakash" },
+  "author": {
+    "name": "R. Surya Prakash"
+  },
   "skills": "./skills/",
   "rules": "./rules/",
   "agents": "./agents/",
@@ -11,27 +13,12 @@
   "variables": {
     "type": "object",
     "properties": {
-      "TARUVI_TENANT": {
-        "type": "string",
-        "title": "Taruvi tenant",
-        "description": "Tenant subdomain (e.g. acme for https://acme.taruvi.cloud/mcp/)"
-      },
-      "TARUVI_API_KEY": {
-        "type": "string",
-        "title": "Taruvi API key",
-        "description": "Knox API key (Authorization: Api-Key …)"
-      },
-      "TARUVI_APP_SLUG": {
-        "type": "string",
-        "title": "Taruvi app slug",
-        "description": "App slug sent as X-App-Slug"
-      },
       "CONTEXT7_API_KEY": {
         "type": "string",
         "title": "Context7 API key",
-        "description": "Optional — library docs MCP"
+        "description": "Optional \u2014 library docs MCP"
       }
     },
-    "required": ["TARUVI_TENANT", "TARUVI_API_KEY", "TARUVI_APP_SLUG"]
+    "required": []
   }
 }

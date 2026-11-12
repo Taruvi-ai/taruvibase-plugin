@@ -1,5 +1,9 @@
 # Raw SQL safety
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 `execute_raw_sql` is the escape hatch when MCP tools can't express what you need. It's powerful, audited, and constrained — but not a substitute for the higher-level tools.
 
 ## Before reaching for raw SQL

@@ -1,5 +1,9 @@
 # Cerbos policy cookbook
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 Authoring Cerbos policies for Taruvi via `manage_policies`. For the canonical authoring guide, call `get_ai_docs(category="policies", topic="guide")` — this file is a condensed reference.
 
 ## Mental model

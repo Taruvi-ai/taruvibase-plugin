@@ -2,9 +2,10 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { inspectTree, validatePortable, validateSkillTree, checkPath } from './lib/conformance.mjs';
 import { validateSkillContent } from "./lib/skill-frontmatter.mjs";
 
-const root = process.cwd();
+const root = path.resolve(process.argv[2] ?? process.cwd());
 const errors = [];
 
 const rel = (...parts) => path.join(...parts);
@@ -38,16 +39,54 @@ function assertPathField(manifest, basePath, pluginRoot, fieldName) {
     fail(`${basePath} ${fieldName} must be a plugin-root-relative path starting with ./`);
     return;
   }
-  const target = abs(pluginRoot, value);
+  let target;
+  try { target = checkPath(abs(pluginRoot), value); }
+  catch (error) { fail(`${basePath} ${fieldName}: ${error.message}`); return; }
   if (!fs.existsSync(target)) {
     fail(`${basePath} ${fieldName} points to missing path ${value}`);
   }
 }
 
+// Validate the native server fields used by these adapters. These are not the
+// portable MCP schema: native clients allow their own transport/variable forms.
+function validateNativeMcp(config, label, { bare = false, httpType = false, siteVariable = false } = {}) {
+  const servers = bare ? config : config.mcpServers;
+  if (!assertObject(servers, `${label} servers`)) return;
+  for (const [name, server] of Object.entries(servers)) {
+    if (!assertObject(server, `${label} ${name}`)) continue;
+    if (server.url !== undefined) {
+      if (typeof server.url !== 'string' || !(server.url.startsWith('https://') || (siteVariable && server.url.startsWith('${TARUVI_SITE_URL}/')))) fail(`${label} ${name}: expected HTTPS URL template`);
+      if (httpType && server.type !== 'http') fail(`${label} ${name}: expected native http type`);
+    } else if (typeof server.command !== 'string' || !server.command) fail(`${label} ${name}: command or URL required`);
+    if (server.args !== undefined && (!Array.isArray(server.args) || server.args.some(v => typeof v !== 'string'))) fail(`${label} ${name}: args must be strings`);
+    for (const key of ['env', 'headers']) {
+      if (server[key] !== undefined && (!assertObject(server[key], `${label} ${name}.${key}`) || Object.values(server[key]).some(v => typeof v !== 'string'))) fail(`${label} ${name}: ${key} values must be strings`);
+    }
+  }
+}
+
+function validateOAuthPackages() {
+  for (const [file, bare, type] of [
+    ['mcp.json', false, 'streamable-http'],
+    ['payload/.kiro/mcp.json', false, 'streamable-http'],
+    ['payload/.claude/.mcp.json', false, 'http'],
+    ['payload/.cursor/mcp.json', false, undefined],
+    ['payload/.codex/.mcp.json', true, undefined],
+    ['payload/.kiro/workspace-mcp.example.json', false, 'http'],
+  ]) {
+    const config = readJson(file);
+    const server = (bare ? config : config?.mcpServers)?.taruvi;
+    if (!server || server.url !== 'https://mcp.taruvibase.com/mcp' || server.type !== type ||
+        Object.keys(server).some(key => !['url', 'type', 'disabled', 'autoApprove'].includes(key))) {
+      fail(`${file}: bundled Taruvi must use the secret-free OAuth endpoint and native/portable transport`);
+    }
+  }
+}
+
 function validateCursor() {
-  const manifestPath = rel("src", "vendors", "cursor", ".cursor-plugin", "plugin.json");
+  const manifestPath = rel("payload", ".cursor", ".cursor-plugin", "plugin.json");
   const pluginRoot = rel("payload", ".cursor");
-  const mcpPath = rel("src", "vendors", "cursor", "mcp.json");
+  const mcpPath = rel("payload", ".cursor", "mcp.json");
   const manifest = readJson(manifestPath);
   const mcp = readJson(mcpPath);
   if (!assertObject(manifest, manifestPath) || !assertObject(mcp, mcpPath)) return;
@@ -56,9 +95,12 @@ function validateCursor() {
     assertPathField(manifest, manifestPath, pluginRoot, field);
   }
 
+  validateNativeMcp(mcp, mcpPath);
   if (!assertObject(manifest.variables, `${manifestPath} variables`)) return;
   if (!assertObject(manifest.variables.properties, `${manifestPath} variables.properties`)) return;
 
+  if (manifest.variables.type !== 'object') fail(`${manifestPath}: variables.type must be object`);
+  for (const key of manifest.variables.required ?? []) if (!manifest.variables.properties[key]) fail(`${manifestPath}: undeclared required variable ${key}`);
   const rawMcp = fs.readFileSync(abs(mcpPath), "utf8");
   const placeholders = new Set([...rawMcp.matchAll(/\$\{([A-Z0-9_]+)\}/g)].map((match) => match[1]));
   for (const name of placeholders) {
@@ -69,16 +111,22 @@ function validateCursor() {
 }
 
 function validateClaude() {
-  const manifestPath = rel("src", "vendors", "claude", ".claude-plugin", "plugin.json");
-  const pluginRoot = rel("src", "vendors", "claude");
-  const mcpPath = rel("src", "vendors", "claude", ".mcp.json");
+  const manifestPath = rel("payload", ".claude", ".claude-plugin", "plugin.json");
+  const pluginRoot = rel("payload", ".claude");
+  const mcpPath = rel("payload", ".claude", ".mcp.json");
   const manifest = readJson(manifestPath);
   const mcp = readJson(mcpPath);
   if (!assertObject(manifest, manifestPath) || !assertObject(mcp, mcpPath)) return;
 
   assertPathField(manifest, manifestPath, pluginRoot, "mcpServers");
+  validateNativeMcp(mcp, mcpPath, { httpType: true });
   if (!assertObject(manifest.userConfig, `${manifestPath} userConfig`)) return;
 
+  for (const [name, config] of Object.entries(manifest.userConfig)) {
+    if (!assertObject(config, `${manifestPath} ${name}`)) continue;
+    for (const field of ['type', 'title', 'description']) if (typeof config[field] !== 'string') fail(`${manifestPath} ${name}.${field}: string required`);
+    if (name.endsWith('api_key') && config.sensitive !== true) fail(`${manifestPath} ${name}: sensitive must be true`);
+  }
   const rawMcp = fs.readFileSync(abs(mcpPath), "utf8");
   const placeholders = new Set([...rawMcp.matchAll(/\$\{user_config\.([a-z0-9_]+)\}/g)].map((match) => match[1]));
   for (const name of placeholders) {
@@ -89,9 +137,9 @@ function validateClaude() {
 }
 
 function validateCodex() {
-  const manifestPath = rel("src", "vendors", "codex", ".codex-plugin", "plugin.json");
+  const manifestPath = rel("payload", ".codex", ".codex-plugin", "plugin.json");
   const pluginRoot = rel("payload", ".codex");
-  const mcpPath = rel("src", "vendors", "codex", ".mcp.json");
+  const mcpPath = rel("payload", ".codex", ".mcp.json");
   const manifest = readJson(manifestPath);
   const mcp = readJson(mcpPath);
   if (!assertObject(manifest, manifestPath) || !assertObject(mcp, mcpPath)) return;
@@ -100,13 +148,14 @@ function validateCodex() {
     assertPathField(manifest, manifestPath, pluginRoot, field);
   }
 
+  validateNativeMcp(mcp, mcpPath, { bare: !mcp.mcpServers });
   if (JSON.stringify(mcp).includes("TARUVI_") || JSON.stringify(mcp).includes("user_config.taruvi")) {
     fail(`${mcpPath} must stay secret-free; Taruvi MCP belongs in Codex config.toml.`);
   }
 }
 
 function validateKiroHooks() {
-  const hooksDir = abs("src", "vendors", "kiro", "hooks");
+  const hooksDir = abs("payload", ".kiro", "hooks");
   const allowedTriggers = new Set([
     "PostFileSave",
     "PreToolUse",
@@ -117,7 +166,7 @@ function validateKiroHooks() {
   ]);
 
   for (const fileName of fs.readdirSync(hooksDir).filter((name) => name.endsWith(".json")).sort()) {
-    const hookPath = rel("src", "vendors", "kiro", "hooks", fileName);
+    const hookPath = rel("payload", ".kiro", "hooks", fileName);
     const config = readJson(hookPath);
     if (!assertObject(config, hookPath)) continue;
     if (config.version !== "v1") {
@@ -203,6 +252,32 @@ function validatePayloadSkills() {
   }
 }
 
+function validateSelfContainedPackages() {
+  const version = readJson('package.json')?.version;
+  for (const vendor of ['claude', 'codex', 'cursor', 'kiro']) {
+    const vendorRoot = abs('payload', `.${vendor}`);
+    try {
+      for (const entry of fs.readdirSync(vendorRoot)) inspectTree(vendorRoot, entry);
+      for (const skill of ['taruvi-app-developer', 'taruvi-refine-providers', `${vendor}-setup`, 'context7-mcp']) {
+        checkPath(vendorRoot, `skills/${skill}/SKILL.md`);
+      }
+      errors.push(...validateSkillTree(vendorRoot));
+      const manifestPath = vendor === 'kiro' ? 'plugin.json' : `.${vendor}-plugin/plugin.json`;
+      const manifest = JSON.parse(fs.readFileSync(checkPath(vendorRoot, manifestPath), 'utf8'));
+      if (manifest.version !== version) fail(`${vendor}: version differs from package.json`);
+      if (vendor === 'kiro') {
+        errors.push(...validatePortable(vendorRoot));
+        for (const script of ['config_check.py', 'mcp_scope.py', 'check-taruvi-setup.py']) checkPath(vendorRoot, `scripts/${script}`);
+        const template = JSON.parse(fs.readFileSync(checkPath(vendorRoot, 'workspace-mcp.example.json')));
+        validateNativeMcp(template, 'Kiro workspace template', { httpType: true, siteVariable: true });
+        if (template.mcpServers?.taruvi?.type !== 'http') fail('Kiro workspace template must use native http transport');
+      }
+    } catch (error) { fail(`${vendor}: ${error.message}`); }
+  }
+}
+
+validateOAuthPackages();
+validateSelfContainedPackages();
 validateCursor();
 validateClaude();
 validateCodex();

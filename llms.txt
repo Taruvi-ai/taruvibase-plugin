@@ -93,7 +93,7 @@ Key references:
 
 ## Development
 
-Build generated vendor payload files:
+Build self-contained vendor payload files (real copies, no sibling symlinks):
 
 ```bash
 npm run build:vendor-files
@@ -105,8 +105,11 @@ Run the local installer test:
 node bin/taruvi-agents-plugin.js install --target /tmp/taruvi-agents-plugin-test --force --allow-non-template
 ```
 
-Run the package test script:
+Run the package test script (isolated regression fixtures), then validate the
+extracted archive and generated-file freshness:
 
 ```bash
 npm test
+npm run test:package
+npm run check:generated
 ```

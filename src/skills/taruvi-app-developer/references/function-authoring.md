@@ -1,5 +1,9 @@
 # Function authoring — runtime contract, modes, triggers, guardrails
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 This is the canonical reference for authoring Taruvi serverless function bodies. Read this before writing any function code. For per-module SDK signatures, see [`function-sdk-reference.md`](function-sdk-reference.md). For event filters, see [`function-events.md`](function-events.md). For worked end-to-end examples, see [`function-scenarios.md`](function-scenarios.md).
 
 ## Guardrails (non-negotiable)

@@ -1,5 +1,9 @@
 # Taruvi architecture overview
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 The mental model you need to orchestrate Taruvi app development.
 
 ## The three layers

@@ -1,5 +1,9 @@
 # Integration pitfalls
 
+> MCP compatibility: legacy action-based tool examples below apply only to the
+> tenant API-key MCP. For OAuth Worker calls, first read the [current tool guide](mcp-tool-quickref.md)
+> and use discovered input schemas. Runtime SDK examples remain separate.
+
 Gotchas that bite when features cross the MCP / function / frontend boundary. If you hit one of these, fix it and consider adding to this file.
 
 ## Policy ordering

@@ -1,8 +1,10 @@
 {
   "name": "taruvi-plugin",
   "description": "Taruvi skills + MCP for building Taruvi apps in Codex",
-  "version": "1.0.0",
-  "author": { "name": "R. Surya Prakash" },
+  "version": "0.1.0",
+  "author": {
+    "name": "R. Surya Prakash"
+  },
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -11,7 +13,10 @@
     "longDescription": "Adds Taruvi app-development and Refine provider skills, plus setup guidance for connecting Codex to a Taruvi app MCP server.",
     "developerName": "Taruvi",
     "category": "Developer tools",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "defaultPrompt": [
       "setup taruvi",
       "Build a Taruvi Refine list page for one of my datatables."

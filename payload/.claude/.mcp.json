@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "taruvi": {
-      "type": "http",
-      "url": "https://${user_config.taruvi_tenant}.taruvi.cloud/mcp/",
-      "headers": {
-        "Authorization": "Api-Key ${user_config.taruvi_api_key}",
-        "X-App-Slug": "${user_config.taruvi_app_slug}"
-      }
+      "url": "https://mcp.taruvibase.com/mcp",
+      "type": "http"
     },
     "context7": {
       "type": "http",
