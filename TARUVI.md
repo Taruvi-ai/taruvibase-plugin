@@ -12,7 +12,6 @@ sites and apps the agent may use.
   site and app the MCP connection covers.
 - `taruvi-app-developer` — backend work: datatables, access policies, roles, users,
   storage, secrets, analytics queries, and Python function bodies.
-- `taruvi-refine-providers` — Refine frontend work with `@taruvi/refine-providers`.
 
 Load the matching skill and its references before writing code. Do not implement
 TaruviBase calls from memory.

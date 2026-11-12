@@ -6,7 +6,6 @@ CLI, Kiro, and other AI coding agents. It gives your agent:
 - the TaruviBase MCP server (`https://mcp.taruvibase.com/mcp`) to manage your app's
   tables, records, functions, policies, storage, secrets, and queries
 - `taruvi-app-developer` for backend work
-- `taruvi-refine-providers` for Refine frontend work
 - `taruvi-setup` to connect a project and write its `.env`
 
 ## Getting started
