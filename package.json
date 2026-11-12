@@ -1,6 +1,6 @@
 {
   "name": "@taruvi/taruvibase-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "TaruviBase plugin for Claude Code, Cursor, Codex, GitHub Copilot, Gemini CLI, Kiro, and other agents.",
   "type": "module",
