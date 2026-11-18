@@ -38,24 +38,6 @@ Key references:
 - [function-sdk-reference.md](skills/taruvi-app-developer/references/function-sdk-reference.md)
 - [feature-workflow-examples.md](skills/taruvi-app-developer/references/feature-workflow-examples.md)
 
-### taruvi-refine-providers
-
-Use [skills/taruvi-refine-providers/SKILL.md](skills/taruvi-refine-providers/SKILL.md)
-for Refine.dev frontend work in TaruviBase apps: data, storage, app, user, auth,
-and access control providers; Refine hooks; list pages; dashboards; uploads;
-permission-aware UI; and frontend calls to TaruviBase functions or analytics.
-
-Key references:
-
-- [overview.md](skills/taruvi-refine-providers/references/overview.md)
-- [database-provider.md](skills/taruvi-refine-providers/references/database-provider.md)
-- [storage-provider.md](skills/taruvi-refine-providers/references/storage-provider.md)
-- [app-provider.md](skills/taruvi-refine-providers/references/app-provider.md)
-- [user-provider.md](skills/taruvi-refine-providers/references/user-provider.md)
-- [auth-provider.md](skills/taruvi-refine-providers/references/auth-provider.md)
-- [access-control-provider.md](skills/taruvi-refine-providers/references/access-control-provider.md)
-- [types-and-utilities.md](skills/taruvi-refine-providers/references/types-and-utilities.md)
-
 ## Development
 
 ```bash

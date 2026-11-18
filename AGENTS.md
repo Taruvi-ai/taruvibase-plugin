@@ -8,7 +8,7 @@ It follows the shared multi-vendor layout used by
 ## Layout
 
 - `skills/` — the only copy of the skills. Every vendor manifest points here.
-  - `taruvi-app-developer` and `taruvi-refine-providers` are synced from their
+  - `taruvi-app-developer` is synced from its
     source of truth, [Taruvi-ai/taruvi-skills](https://github.com/Taruvi-ai/taruvi-skills).
     `skills/.taruvi-skills-commit` records the synced commit.
   - `taruvi-setup` is owned by this repo.
@@ -37,8 +37,8 @@ npx claude plugin validate .claude-plugin/plugin.json
 ## Editing rules
 
 - Keep `skills/` as real files. Do not replace it with a symlink or submodule.
-- Do not edit `skills/taruvi-app-developer` or `skills/taruvi-refine-providers`
-  here. Change them in `Taruvi-ai/taruvi-skills`, then run
+- Do not edit `skills/taruvi-app-developer`
+  here. Change it in `Taruvi-ai/taruvi-skills`, then run
   `bash scripts/sync-skills.sh` (or the **Sync skills** workflow, which also runs
   daily and opens a PR).
 - Keep the plugin name `taruvi` and the version identical in every manifest;
