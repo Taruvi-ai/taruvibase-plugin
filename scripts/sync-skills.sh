@@ -5,7 +5,7 @@ set -euo pipefail
 
 REF="${1:-main}"
 REPO="https://github.com/Taruvi-ai/taruvi-skills.git"
-SYNCED_SKILLS=(taruvi-app-developer)
+SYNCED_SKILLS=(taruvi-app-developer taruvi-refine-providers)
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"

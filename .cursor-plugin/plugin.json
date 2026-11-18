@@ -1,7 +1,7 @@
 {
   "name": "taruvi",
-  "version": "0.3.0",
-  "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, and analytics.",
+  "version": "0.4.0",
+  "description": "TaruviBase skills and MCP access for building TaruviBase apps: datatables, access policies, functions, storage, secrets, analytics, and Refine frontends.",
   "author": {
     "name": "Taruvi",
     "url": "https://taruvibase.com"
@@ -16,6 +16,7 @@
     "backend",
     "database",
     "mcp",
+    "refine",
     "functions",
     "policies"
   ],
